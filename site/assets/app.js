@@ -52,11 +52,23 @@
 
   // ---------- 卡片與圖表 ----------
   const charts = [];
-  function card(id, { title, takeaway, source, height }) {
+  function card(id, { title, takeaway, source, height, hint }) {
     const el = document.getElementById(id);
+    const chartDom = el.querySelector('.chart');
+    if (chartDom && echarts.getInstanceByDom(chartDom)) {
+      el.querySelector('h3').textContent = title;
+      const tk = el.querySelector('.takeaway');
+      if (tk) tk.textContent = takeaway || '';
+      el.querySelector('.source').textContent = source || SRC;
+      const h = el.querySelector('.hint');
+      if (h) h.textContent = hint || '';
+      chartDom.className = `chart ${height || ''}`;
+      return el;
+    }
     el.innerHTML = `
       <h3>${title}</h3>
-      ${takeaway ? `<p class="takeaway">${takeaway}</p>` : ''}
+      <p class="takeaway">${takeaway || ''}</p>
+      ${hint ? `<p class="hint">${hint}</p>` : ''}
       <div class="chart ${height || ''}"></div>
       <div class="card-foot"><span class="source">${source || SRC}</span>
         <button class="table-toggle" type="button" aria-expanded="false">查看數據</button></div>
@@ -101,11 +113,43 @@
     };
   }
 
-  function mount(el, option) {
+  function mount(el, option, handlers = {}) {
     const dom = el.querySelector('.chart');
     let c = echarts.getInstanceByDom(dom);
-    if (!c) { c = echarts.init(dom, null, { renderer: 'svg' }); charts.push(c); }
-    c.setOption(option, true);
+    if (!c) {
+      c = echarts.init(dom, null, { renderer: 'svg' }); charts.push(c);
+      c.setOption(option, true);
+    } else {
+      // 連動更新：用合併模式讓長條、線條平滑過渡（整份替換會銷毀提示框並重播進場動畫）；
+      // 只有資料系列數量改變時才替換系列
+      c.resize();
+      const prevN = (c.getOption().series || []).length;
+      c.setOption(option, prevN === option.series.length ? undefined : { replaceMerge: ['series'] });
+    }
+    // 只移除自己綁的處理器；不帶參數的 getZr().off('click') 會連 ECharts 內部的點擊處理一起移除
+    c.off('click');
+    if (c.__zrClick) { c.getZr().off('click', c.__zrClick); c.__zrClick = null; }
+    const clickable = !!(handlers.item || handlers.axisIndex);
+    dom.classList.toggle('clickable', clickable);
+    if (handlers.item) {
+      c.on('click', (p) => {
+        if (p.componentType === 'series') handlers.item(p.name, p.seriesName);
+        else if (p.componentType === 'xAxis' || p.componentType === 'yAxis') handlers.item(p.value, null);
+      });
+    }
+    if (handlers.axisIndex) {
+      // 點圖表任何位置都選到最近的類別（年份、月份），不必剛好點中資料點
+      c.__zrClick = (e) => {
+        const pt = [e.offsetX, e.offsetY];
+        if (!c.containPixel('grid', pt)) return;
+        const v = c.convertFromPixel({ gridIndex: 0 }, pt);
+        const i = v ? Math.round(v[0]) : -1;
+        const n = c.getOption().xAxis[0].data.length;
+        if (i >= 0 && i < n) handlers.axisIndex(i);
+      };
+      c.getZr().on('click', c.__zrClick);
+    }
+    el._chart = c;
     return c;
   }
 
@@ -113,8 +157,8 @@
   const axisNum = (v) => (Math.abs(v) >= 1e4 ? (v / 1e4).toLocaleString('zh-TW', { maximumFractionDigits: 1 }) + '萬' : v.toLocaleString('zh-TW'));
 
   /** 折線圖。ser: [{name, data, color}] */
-  function lineChart(id, { title, takeaway, source, cats, ser, digits = 0, unit = '', catHead = '期間', yMin, endLabel = true, area = false, height }) {
-    const el = card(id, { title, takeaway, source, height });
+  function lineChart(id, { title, takeaway, source, cats, ser, digits = 0, unit = '', catHead = '期間', yMin, endLabel = true, area = false, height, hint, selectedIndex, onSelectIndex, focusName, onSelectSeries }) {
+    const el = card(id, { title, takeaway, source, height, hint });
     const o = baseOption();
     const ax = o._axis; delete o._axis;
     o.legend.show = ser.length > 1;
@@ -125,22 +169,42 @@
     o.tooltip.valueFormatter = valueFormatter(digits, unit);
     o.xAxis = { type: 'category', data: cats, boundaryGap: false, ...ax, splitLine: { show: false } };
     o.yAxis = { type: 'value', min: yMin, ...ax, axisLine: { show: false }, axisLabel: { ...ax.axisLabel, formatter: unit === '%' ? '{value}%' : axisNum } };
-    o.series = ser.map((s, i) => ({
-      name: s.name, type: 'line', data: s.data, smooth: false, symbol: 'circle', symbolSize: 7, showSymbol: cats.length <= 24,
-      lineStyle: { width: 2, color: s.color || series(i + 1) },
-      itemStyle: { color: s.color || series(i + 1), borderColor: css('--surface-1'), borderWidth: 2 },
-      areaStyle: area ? { color: s.color || series(i + 1), opacity: 0.08 } : undefined,
-      endLabel: useEnd ? { show: true, formatter: '{a}', color: css('--text-secondary'), fontSize: 12 } : undefined,
-      emphasis: { focus: 'series' },
-    }));
-    mount(el, o);
+    o.series = ser.map((s, i) => {
+      const dim = focusName && s.name !== focusName;
+      const strong = focusName && s.name === focusName;
+      const color = s.color || series(i + 1);
+      return {
+        name: s.name, type: 'line', data: s.data, smooth: false, symbol: 'circle', symbolSize: strong ? 9 : 7, showSymbol: cats.length <= 24,
+        z: strong ? 5 : 2,
+        triggerLineEvent: !!onSelectSeries,
+        lineStyle: { width: strong ? 3 : 2, color, opacity: dim ? 0.35 : 1 },
+        itemStyle: { color, borderColor: css('--surface-1'), borderWidth: 2, opacity: dim ? 0.35 : 1 },
+        areaStyle: area ? { color, opacity: 0.08 } : undefined,
+        endLabel: useEnd ? { show: true, formatter: '{a}', color: css('--text-secondary'), fontSize: 12 } : undefined,
+        emphasis: { focus: focusName ? 'none' : 'series' },
+        markLine: {
+          silent: true, symbol: 'none', animation: false,
+          lineStyle: { color: css('--text-secondary'), width: 1, type: 'solid' },
+          label: { show: true, position: 'end', formatter: selectedIndex != null ? cats[selectedIndex] : '', color: css('--text-primary'), fontSize: 12, fontWeight: 600 },
+          data: i === 0 && selectedIndex != null ? [{ xAxis: selectedIndex }] : [],
+        },
+      };
+    });
+    if (selectedIndex != null) o.grid.top = Math.max(o.grid.top, 28);
+    mount(el, o, {
+      axisIndex: onSelectIndex,
+      item: onSelectSeries ? (_n, seriesName) => seriesName && onSelectSeries(seriesName) : undefined,
+    });
     renderTable(el, cats, ser, catHead, digits);
     return el;
   }
 
   /** 長條圖（horizontal=true 為橫條，適合排名） */
-  function barChart(id, { title, takeaway, source, cats, ser, digits = 0, unit = '', catHead = '項目', horizontal = false, stack = false, height, labels = true, colors }) {
-    const el = card(id, { title, takeaway, source, height });
+  function barChart(id, { title, takeaway, source, cats, ser, digits = 0, unit = '', catHead = '項目', horizontal = false, stack = false, height, labels = true, colors, hint, selected, onSelect }) {
+    const el = card(id, { title, takeaway, source, height, hint });
+    if (selected != null && ser.length === 1 && cats.includes(selected)) {
+      colors = cats.map((c, j) => (c === selected ? (colors ? colors[j] : (ser[0].color || series(1))) : css('--neutral')));
+    }
     const o = baseOption();
     const ax = o._axis; delete o._axis;
     o.legend.show = ser.length > 1;
@@ -148,7 +212,8 @@
     o.tooltip.trigger = 'axis';
     o.tooltip.axisPointer = { type: 'shadow', shadowStyle: { color: css('--grid'), opacity: 0.4 } };
     o.tooltip.valueFormatter = valueFormatter(digits, unit);
-    const catAxis = { type: 'category', data: cats, ...ax, splitLine: { show: false }, axisLabel: { ...ax.axisLabel, color: css('--text-secondary'), fontSize: 12, interval: 0 } };
+    const catAxis = { type: 'category', data: cats, triggerEvent: !!onSelect, ...ax, splitLine: { show: false }, axisLabel: { ...ax.axisLabel, color: css('--text-secondary'), fontSize: 12, interval: 0,
+      ...(selected != null ? { formatter: (v) => (v === selected ? `{sel|${v}}` : v), rich: { sel: { color: css('--text-primary'), fontWeight: 700, fontSize: 12 } } } : {}) } };
     const valAxis = { type: 'value', ...ax, splitNumber: window.innerWidth < 600 ? 3 : 5, axisLine: { show: false }, axisLabel: { ...ax.axisLabel, hideOverlap: true, formatter: unit === '%' ? '{value}%' : axisNum } };
     if (horizontal) { catAxis.inverse = true; o.xAxis = valAxis; o.yAxis = catAxis; o.grid.right = labels ? 64 : 24; }
     else { o.xAxis = catAxis; o.yAxis = valAxis; if (cats.length > 8) catAxis.axisLabel.rotate = 0; catAxis.axisLabel.hideOverlap = true; catAxis.axisLabel.interval = 'auto'; }
@@ -168,7 +233,7 @@
       } : undefined,
       emphasis: { focus: ser.length > 1 ? 'series' : 'none' },
     }));
-    mount(el, o);
+    mount(el, o, { item: onSelect ? (name) => onSelect(name) : undefined });
     renderTable(el, cats, ser, catHead, digits);
     return el;
   }
@@ -201,33 +266,71 @@
       { label: '刑事案件平均審理天數', value: fmt(ytd(38, '終結事件平均一件所需日數'), 1), raw: true, unit: '天', note: '地方法院，今年累計' },
     ]);
 
-    const tot = annual(1, '合計');
-    const first = tot[0], last = tot[tot.length - 1];
+    homeState = { year: null, cat: null };
+    const yb = document.getElementById('hYear'), cb = document.getElementById('hCat');
+    yb.innerHTML = `<option value="">${ytdLabel}（今年累計）</option>` + annualYears(1).slice().reverse().map((y) => `<option value="${y}">${y}年</option>`).join('');
+    cb.innerHTML = '<option value="">全部案件</option>' + HOME_CATS.map((c) => `<option value="${c.n}">${c.n}</option>`).join('');
+    yb.onchange = () => { homeState.year = yb.value || null; drawHomeLinked(); };
+    cb.onchange = () => { homeState.cat = cb.value || null; drawHomeLinked(); };
+    document.getElementById('hReset').onclick = () => { homeState = { year: null, cat: null }; drawHomeLinked(); };
+    drawHomeLinked();
+  }
+
+  // 「合計」不含公設辯護、調查保護（人）、家事調查官事件，這裡依合計的組成拆分
+  const HOME_CATS = [
+    { n: '強制執行', cols: ['強制執行'] }, { n: '民事', cols: ['民事'] }, { n: '刑事', cols: ['刑事'] },
+    { n: '公證', cols: ['公證'] }, { n: '提存', cols: ['提存'] }, { n: '行政訴訟', cols: ['行政訴訟'] },
+    { n: '其他（憲法法庭、陳訴等）', cols: ['憲法法庭', '人民陳訴', '刑事補償及法官評鑑等', '懲戒及職務'] },
+  ];
+  const catVal = (cat, row) => sum((cat ? cat.cols : ['合計']).map((c) => row?.[c]));
+  let homeState = { year: null, cat: null };
+
+  function drawHomeLinked() {
+    const st = homeState;
+    const cat = HOME_CATS.find((c) => c.n === st.cat) || null;
+    const catLabel = cat ? cat.n.replace(/（.*）/, '') : '全部';
+    const years = annualYears(1);
+    const A = tbl(1).annual;
+    document.getElementById('hYear').value = st.year || '';
+    document.getElementById('hCat').value = st.cat || '';
+    document.getElementById('hReset').hidden = !st.year && !st.cat;
+
+    // 十年趨勢：依選取的案件類別
+    const trend = years.map((y) => catVal(cat, A[y]));
+    const first = trend[0], last = trend[trend.length - 1];
     lineChart('c-home-trend', {
-      title: '十年來法院新收案件總數',
-      takeaway: `${annualYears(1)[annualYears(1).length - 1]}年共新收 ${fmt(last / 1e4, 0)} 萬件，比 ${annualYears(1)[0]}年增加 ${fmt(pct(last - first, first), 0)}%。`,
-      source: sourceOf(1), cats: yearCats(1), ser: [{ name: '新收案件', data: tot }], area: true, catHead: '年度',
+      title: cat ? `十年來「${catLabel}」新收件數` : '十年來法院新收案件總數',
+      takeaway: `${years[years.length - 1]}年${cat ? catLabel : '共'}新收 ${last >= 1e5 ? fmt(last / 1e4, 0) + ' 萬件' : fmt(last) + ' 件'}，比 ${years[0]}年${last >= first ? '增加' : '減少'} ${fmt(Math.abs(pct(last - first, first)), 0)}%。`,
+      hint: '點選圖上任一年，右邊會顯示那一年的案件組成；再點一次取消。',
+      source: sourceOf(1), cats: yearCats(1), ser: [{ name: cat ? catLabel : '新收案件', data: trend }], area: true, catHead: '年度',
+      selectedIndex: st.year ? years.indexOf(st.year) : null,
+      onSelectIndex: (i) => { const y = years[i]; homeState.year = homeState.year === y ? null : y; drawHomeLinked(); },
     });
 
-    // 「合計」不含公設辯護、調查保護（人）、家事調查官事件，這裡依合計的組成拆分
-    const mixCols = [['強制執行', '強制執行'], ['民事', '民事'], ['刑事', '刑事'], ['公證', '公證'], ['提存', '提存'], ['行政訴訟', '行政訴訟']];
-    const mixVals = mixCols.map(([c]) => ytd(1, c));
-    const rest = sum(['憲法法庭', '人民陳訴', '刑事補償及法官評鑑等', '懲戒及職務'].map((c) => ytd(1, c)));
-    const mix = mixCols.map(([, n], i) => ({ n, v: mixVals[i] })).sort((a, b) => b.v - a.v).concat([{ n: '其他（憲法法庭、陳訴等）', v: rest }]);
-    const totalY = ytd(1, '合計');
+    // 組成：依選取的年份
+    const row = st.year ? A[st.year] : tbl(1).ytd.values;
+    const period = st.year ? `${st.year}年` : ytdLabel;
+    const mix = HOME_CATS.slice(0, -1).map((c) => ({ n: c.n, v: catVal(c, row) })).sort((a, b) => b.v - a.v)
+      .concat([{ n: HOME_CATS[HOME_CATS.length - 1].n, v: catVal(HOME_CATS[HOME_CATS.length - 1], row) }]);
+    const totalY = row['合計'];
     barChart('c-home-mix', {
-      title: `法院在忙什麼？（${ytdLabel}新收）`,
-      takeaway: `強制執行（如拍賣、扣薪）和民事案件加起來占了 ${fmt(pct(ytd(1, '強制執行') + ytd(1, '民事'), totalY), 0)}%，刑事案件約占 ${fmt(pct(ytd(1, '刑事'), totalY), 0)}%。`,
+      title: `法院在忙什麼？（${period}新收）`,
+      takeaway: cat
+        ? `${period}「${catLabel}」新收 ${fmt(catVal(cat, row))} 件，占全部 ${fmt(pct(catVal(cat, row), totalY), 1)}%。`
+        : `強制執行（如拍賣、扣薪）和民事案件加起來占了 ${fmt(pct(row['強制執行'] + row['民事'], totalY), 0)}%，刑事案件約占 ${fmt(pct(row['刑事'], totalY), 0)}%。`,
+      hint: '點選一種案件，左邊和下方的趨勢圖會改成只看這一類。',
       source: sourceOf(1), cats: mix.map((m) => m.n), ser: [{ name: '新收件數', data: mix.map((m) => m.v) }], horizontal: true, catHead: '案件類別',
+      selected: st.cat, onSelect: (n) => { homeState.cat = homeState.cat === n ? null : n; drawHomeLinked(); },
     });
 
+    // 每月：依選取的案件類別；選了年份時標出該年的月份範圍
+    const mk = months(1);
+    const mdata = mk.map((k) => catVal(cat, tbl(1).monthly[k]));
     lineChart('c-home-monthly', {
-      title: '每月新收案件數',
+      title: cat ? `每月「${catLabel}」新收件數` : '每月新收案件數',
       takeaway: '每年 2 月因春節連假，新收案件通常明顯減少。',
-      source: sourceOf(1), cats: monthCats(1),
-      ser: [
-        { name: '各級法院合計', data: monthly(1, '合計') },
-      ], catHead: '月份', height: 'short',
+      source: sourceOf(1), cats: monthCats(1), catHead: '月份', height: 'short',
+      ser: [{ name: cat ? catLabel : '各級法院合計', data: mdata }],
     });
   }
 
@@ -246,6 +349,12 @@
     if (keep && ks.includes(keep)) sel.value = keep;
   }
 
+  let courtSel = null;   // 目前選取的法院（全名）
+
+  function courtList(t) {
+    return Object.keys(tbl(t).months[lastSnapshot(t)]).filter(isDistrictCourt);
+  }
+
   function renderCourtRank() {
     const type = COURT_TYPES[document.getElementById('fCourtType').value];
     const metric = document.getElementById('fCourtMetric').value;
@@ -253,27 +362,87 @@
     const month = mSel.value;
     const snap = tbl(type.t).months[month];
     const col = type[metric];
-    const rows = Object.entries(snap).filter(([n]) => isDistrictCourt(n)).map(([n, v]) => ({ n: shortCourt(n), v: v[col] })).sort((a, b) => b.v - a.v);
+    const rows = Object.entries(snap).filter(([n]) => isDistrictCourt(n)).map(([n, v]) => ({ full: n, n: shortCourt(n), v: v[col] })).sort((a, b) => b.v - a.v);
+    if (!courtSel || !rows.some((r) => r.full === courtSel)) courtSel = rows[0].full;
+    document.getElementById('fCourt').value = courtSel;
     const [mLabel, unit] = METRIC_LABEL[metric];
     const avg = metric === 'days' ? snap['臺灣各地方法院計']?.[col] : null;
     const top = rows[0];
+    const periodLabel = tbl(type.t).periods?.[month] || per(month);
     barChart('c-court-rank', {
-      title: `各地方法院${type.name}${mLabel}（${tbl(type.t).periods?.[month] || per(month)}）`,
+      title: `各地方法院${type.name}${mLabel}（${periodLabel}）`,
       takeaway: metric === 'days'
         ? `全國平均約 ${fmt(avg, 0)} 天；最久的是${top.n}（${fmt(top.v, 0)} 天）。天數受案件類型、複雜度影響，不能直接代表效率。`
         : `${top.n}最多，共 ${fmt(top.v)} ${unit}；前三名合計占全國 ${fmt(pct(sum(rows.slice(0, 3).map((r) => r.v)), sum(rows.map((r) => r.v))), 0)}%。`,
+      hint: '點選一所法院，右邊會顯示它的每月變化與重點數字。',
       source: sourceOf(type.t), cats: rows.map((r) => r.n), ser: [{ name: mLabel, data: rows.map((r) => r.v) }],
       horizontal: true, height: 'tall', digits: metric === 'days' ? 1 : 0, catHead: '法院',
+      selected: shortCourt(courtSel),
+      onSelect: (short) => { const r = rows.find((x) => x.n === short); if (r) { courtSel = r.full; renderCourtRank(); } },
     });
+    renderCourtDetail(type, metric, month, rows);
+  }
+
+  function renderCourtDetail(type, metric, month, rows) {
+    const T0 = tbl(type.t);
+    const have = Object.keys(T0.months);
+    // 補齊中間缺少的月份（例如半年報、期別錯誤被略過的月份），在圖上留空而不是直接相連
+    const ms = [];
+    for (let [y, m] = have[0].split('-').map(Number); `${y}-${String(m).padStart(2, '0')}` <= have[have.length - 1]; m === 12 ? (y++, m = 1) : m++) ms.push(`${y}-${String(m).padStart(2, '0')}`);
+    const gaps = ms.filter((k) => !T0.months[k]).map((k) => `${+k.split('-')[1]}月`);
+    const col = type[metric];
+    const [mLabel] = METRIC_LABEL[metric];
+    const name = shortCourt(courtSel);
+    const nCourts = rows.length;
+    const own = ms.map((k) => T0.months[k]?.[courtSel]?.[col] ?? null);
+    const nat = ms.map((k) => {
+      const v = T0.months[k]?.['臺灣各地方法院計']?.[col];
+      return v == null ? null : (metric === 'days' ? v : v / nCourts);
+    });
+    lineChart('c-court-detail', {
+      title: `${name}：每月${type.name}${mLabel}`,
+      takeaway: (metric === 'days' ? '和全國地方法院平均天數比較。' : `和全國 ${nCourts} 所地方法院的平均值比較。`) + (gaps.length ? `${gaps.join('、')}沒有單月的機關別資料。` : ''),
+      hint: '點選月份，左邊的排名會切換到那個月。',
+      source: sourceOf(type.t), cats: ms.map(perShort), catHead: '月份', digits: metric === 'days' ? 1 : 0, unit: metric === 'days' ? '天' : '',
+      ser: [{ name, data: own }, { name: metric === 'days' ? '全國平均' : '各院平均', data: nat, color: css('--neutral') }],
+      endLabel: false, height: 'short',
+      selectedIndex: ms.indexOf(month),
+      onSelectIndex: (i) => { if (ms[i] && T0.months[ms[i]]) { document.getElementById('fCourtMonth').value = ms[i]; renderCourtRank(); } },
+    });
+
+    const snap = T0.months[month];
+    const me = snap[courtSel] || {};
+    const rankOf = (c) => {
+      const vals = rows.map((r) => snap[r.full]?.[c]).filter((v) => v != null).sort((a, b) => b - a);
+      return vals.indexOf(me[c]) + 1;
+    };
+    const items = [
+      ['新收', fmt(me[type.new]), '件', `第 ${rankOf(type.new)} 多`],
+      ['終結', fmt(me[type.closed]), '件', `第 ${rankOf(type.closed)} 多`],
+      ['未結', fmt(me[type.pending]), '件', `第 ${rankOf(type.pending)} 多`],
+      ['平均審理天數', fmt(me[type.days], 1), '天', `全國 ${fmt(snap['臺灣各地方法院計']?.[type.days], 1)} 天`],
+    ];
+    const up = Object.keys(me).find((k) => /^上訴(案件|事件)維持率$/.test(k));
+    if (up && me[up] != null) items.push(['上訴維持率', fmt(me[up], 1), '%', '上級法院維持原判的比例']);
+    const settle = me['調解成立百分比/百分比一'];
+    if (settle != null) items.push(['調解成立比例', fmt(settle, 1), '%', '成立 ÷（成立＋不成立）']);
+    document.getElementById('c-court-profile').innerHTML = `
+      <h3>${name}重點數字</h3>
+      <p class="takeaway">${type.name}事件，${T0.periods?.[month] || per(month)}；排名是在 ${nCourts} 所地方法院中的名次。</p>
+      <dl class="profile">${items.map(([k, v, u, note]) => `<div><dt>${k}</dt><dd>${v}<small>${u}</small></dd><dd class="muted">${note}</dd></div>`).join('')}</dl>
+      <div class="card-foot"><span class="source">${sourceOf(type.t)}</span></div>`;
   }
 
   function renderCourts() {
     const mSel = document.getElementById('fCourtMonth');
     const typeSel = document.getElementById('fCourtType');
+    const cSel = document.getElementById('fCourt');
     fillMonthSelect(mSel, COURT_TYPES[typeSel.value].t, mSel.value);
+    cSel.innerHTML = courtList(COURT_TYPES[typeSel.value].t).map((n) => `<option value="${n}">${shortCourt(n)}</option>`).join('');
     typeSel.onchange = (() => { fillMonthSelect(mSel, COURT_TYPES[typeSel.value].t, mSel.value); renderCourtRank(); });
     document.getElementById('fCourtMetric').onchange = renderCourtRank;
     mSel.onchange = renderCourtRank;
+    cSel.onchange = () => { courtSel = cSel.value; renderCourtRank(); };
     renderCourtRank();
 
     lineChart('c-court-days', {
@@ -328,7 +497,7 @@
       ${box('高等法院及分院', [['民事', n(18)], ['刑事', n(20)]])}
       ${box('高等行政法院', [['行政訴訟（含地方行政訴訟庭）', n(11)]], 'span2')}
       <div class="lvl-label">第一審</div>
-      ${box('地方法院（22 所）', [['民事', n(22)], ['刑事', n(38)], ['家事', n(32)]])}
+      ${box('地方法院（22 所＋少家法院）', [['民事', n(22)], ['刑事', n(38)], ['家事', n(32)]])}
       <div class="lvl-label">專業法院</div>
       <div class="rung-row">
         ${box('憲法法庭', [['憲法案件', n(3)]])}
@@ -444,39 +613,67 @@
       { label: `地院緩刑率（${per(p55)}）`, value: fmt(prob['合計/緩刑率'], 1), raw: true, unit: '%', note: '符合緩刑條件的被告中，獲宣告緩刑的比例' },
     ]);
 
-    barChart('c-crime-top', {
-      title: `終結案件最多的十種罪名（${ytdLabel}）`,
-      takeaway: `${crimeName(top[0].c)}最多，占全部第一審終結案件的 ${fmt(pct(top[0].v, totalY), 0)}%。「公共危險罪」大多是酒駕。`,
-      source: sourceOf(41), cats: top.map((x) => crimeName(x.c)), ser: [{ name: '終結件數', data: top.map((x) => x.v) }],
-      horizontal: true, height: 'tall', catHead: '罪名',
-    });
-
-    const focus = [['詐欺罪', '詐欺'], ['違反洗錢防制法', '洗錢'], ['公共危險罪', '公共危險'], ['竊盜罪', '竊盜'], ['違反毒品危害防制條例', '毒品']];
-    const fraud = annual(41, '詐欺罪');
-    lineChart('c-crime-trend', {
-      title: '主要罪名十年趨勢（第一審終結件數）',
-      takeaway: `詐欺案件從 ${annualYears(41)[0]}年的 ${fmt(fraud[0])} 件增加到 ${annualYears(41).slice(-1)[0]}年的 ${fmt(fraud[fraud.length - 1])} 件，已超越公共危險罪（多為酒駕）；毒品案件則比十年前少了一半以上。`,
-      source: sourceOf(41), cats: yearCats(41), catHead: '年度', height: 'tall',
-      ser: focus.map(([c, n]) => ({ name: n, data: annual(41, c) })),
-    });
-
-    // 裁判結果（表42，單月）
+    // 裁判結果（表42，單月）的選單
     const cSel = document.getElementById('fVerdictCrime');
     const mSel = document.getElementById('fVerdictMonth');
-    const keepCrime = cSel.value;
     fillMonthSelect(mSel, 42, mSel.value);
     const snap0 = tbl(42).months[lastSnapshot(42)];
     const rowsAll = Object.keys(snap0).filter((k) => !['男', '女', '其他'].includes(k));
     const popular = ['合計', '詐欺罪', '違反洗錢防制法', '公共危險罪', '竊盜罪', '傷害罪', '違反毒品危害防制條例'];
     const ordered = popular.filter((p) => rowsAll.includes(p)).concat(rowsAll.filter((r) => !popular.includes(r)));
     cSel.innerHTML = ordered.map((r) => `<option value="${r}">${r === '合計' ? '全部罪名' : crimeName(r)}</option>`).join('');
-    if (keepCrime && ordered.includes(keepCrime)) cSel.value = keepCrime;
-    const draw = () => renderVerdict(cSel.value, mSel.value);
-    cSel.onchange = draw; mSel.onchange = draw;
-    draw();
+    cSel.onchange = () => { crimeSel = fromT42(cSel.value); drawCrimeLinked(); };
+    mSel.onchange = () => drawCrimeLinked();
+    crimeCtx = { top, totalY, crimes };
+    drawCrimeLinked();
   }
 
-  function renderVerdict(crime, month) {
+  // 表41（罪名別件數）與表42（裁判結果）罪名寫法不同的對照
+  const T41_TO_T42 = { '殺人罪/殺人': '殺人', '殺人罪/過失致死': '過失致死', '偽造有價證卷罪': '偽造有價證券罪', '藏匿犯人及湮滅證據罪': '藏匿人犯及湮滅證據罪', '違反公權人員選舉罷免法': '違反公職人員選舉罷免法' };
+  const toT42 = (c) => (c ? T41_TO_T42[c] || c : '合計');
+  const fromT42 = (r) => (r === '合計' ? null : (Object.keys(T41_TO_T42).find((k) => T41_TO_T42[k] === r) || r));
+  let crimeSel = null;   // 目前選取的罪名（表41欄名），null 表示全部
+  let crimeCtx = null;
+  const CRIME_FOCUS = ['詐欺罪', '違反洗錢防制法', '公共危險罪', '竊盜罪', '違反毒品危害防制條例'];
+
+  function drawCrimeLinked() {
+    const { top, totalY, crimes } = crimeCtx;
+    const selName = crimeSel ? crimeName(crimeSel) : null;
+    const pick = (name) => { const c = crimes.find((x) => crimeName(x) === name); crimeSel = crimeSel === c ? null : c; drawCrimeLinked(); };
+
+    barChart('c-crime-top', {
+      title: `終結案件最多的十種罪名（${ytdLabel}）`,
+      takeaway: selName && top.some((x) => x.c === crimeSel)
+        ? `${selName}：${fmt(ytd(41, crimeSel))} 件，占全部第一審終結案件的 ${fmt(pct(ytd(41, crimeSel), totalY), 1)}%，較去年同期${yoy(41, crimeSel) >= 0 ? '增加' : '減少'} ${fmt(Math.abs(yoy(41, crimeSel)), 1)}%。`
+        : `${crimeName(top[0].c)}最多，占全部第一審終結案件的 ${fmt(pct(top[0].v, totalY), 0)}%。「公共危險罪」大多是酒駕。`,
+      hint: '點選罪名，右邊趨勢和下方的裁判結果會換成這個罪名；再點一次取消。',
+      source: sourceOf(41), cats: top.map((x) => crimeName(x.c)), ser: [{ name: '終結件數', data: top.map((x) => x.v) }],
+      horizontal: true, height: 'tall', catHead: '罪名',
+      selected: selName, onSelect: pick,
+    });
+
+    const cols = CRIME_FOCUS.concat(crimeSel && !CRIME_FOCUS.includes(crimeSel) ? [crimeSel] : []);
+    const fraud = annual(41, '詐欺罪');
+    const sd = crimeSel ? annual(41, crimeSel) : null;
+    lineChart('c-crime-trend', {
+      title: '主要罪名十年趨勢（第一審終結件數）',
+      takeaway: crimeSel
+        ? `${selName}從 ${annualYears(41)[0]}年的 ${fmt(sd[0])} 件，變成 ${annualYears(41).slice(-1)[0]}年的 ${fmt(sd[sd.length - 1])} 件。`
+        : `詐欺案件從 ${annualYears(41)[0]}年的 ${fmt(fraud[0])} 件增加到 ${annualYears(41).slice(-1)[0]}年的 ${fmt(fraud[fraud.length - 1])} 件，已超越公共危險罪（多為酒駕）；毒品案件則比十年前少了一半以上。`,
+      hint: '點選線條也能選取罪名。',
+      source: sourceOf(41), cats: yearCats(41), catHead: '年度', height: 'tall',
+      ser: cols.map((c) => ({ name: crimeName(c), data: annual(41, c) })),
+      focusName: selName, onSelectSeries: pick,
+    });
+
+    const cSel = document.getElementById('fVerdictCrime');
+    const want = toT42(crimeSel);
+    const has = [...cSel.options].some((o) => o.value === want);
+    cSel.value = has ? want : '合計';
+    renderVerdict(cSel.value, document.getElementById('fVerdictMonth').value, crimeSel && !has ? selName : null);
+  }
+
+  function renderVerdict(crime, month, missingName) {
     const snap = tbl(42).months[month];
     const r = snap[crime] || {};
     const label = tbl(42).periods?.[month] || per(month);
@@ -489,7 +686,7 @@
     const total = r['被告人數'] || 0;
     barChart('c-verdict', {
       title: `被告最後被判了什麼？（${name}，${label}）`,
-      takeaway: total ? `共 ${fmt(total)} 名被告，${fmt(pct(r['科刑/計'], total), 0)}% 被判有罪科刑，${fmt(pct(r['無罪'], total), 1)}% 無罪。` : '這個月沒有此罪名的終結案件。',
+      takeaway: missingName ? `裁判結果表沒有「${missingName}」的分項，先顯示全部罪名。` : total ? `共 ${fmt(total)} 名被告，${fmt(pct(r['科刑/計'], total), 0)}% 被判有罪科刑，${fmt(pct(r['無罪'], total), 1)}% 無罪。` : '這個月沒有此罪名的終結案件。',
       source: sourceOf(42), cats: parts.map((p) => p[0]), ser: [{ name: '人數', data: parts.map((p) => p[1] || 0) }],
       horizontal: true, catHead: '裁判結果',
     });

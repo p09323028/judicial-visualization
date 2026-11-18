@@ -39,6 +39,17 @@
     <p class="lede">臺灣各級法院每年要處理超過 400 萬件案件。這裡用圖表整理司法院每月公布的統計，帶你快速了解法院在忙什麼、案件量怎麼變化。</p>
     <h2 class="section-title"><span id="ytdLabel">今年</span>累計重點</h2>
     <div class="tiles" id="homeTiles"></div>
+    <h2 class="section-title">互動探索</h2>
+    <div class="filters linkbar" role="group" aria-label="總覽圖表篩選">
+      <label for="hYear">年份
+        <select id="hYear"></select>
+      </label>
+      <label for="hCat">案件類別
+        <select id="hCat"></select>
+      </label>
+      <button id="hReset" class="ghost-btn" type="button" hidden>清除選取</button>
+      <p class="linkbar-note">也可以直接點圖表：三張圖會一起變。</p>
+    </div>
     <div class="grid two">
       <div class="card" id="c-home-trend"></div>
       <div class="card" id="c-home-mix"></div>
@@ -48,7 +59,7 @@
 
   <!-- 案件與法院 -->
   <section id="tab-courts" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">各地方法院的案件量差很多。選擇案件類別和指標，比較 22 所地方法院（含高雄少家法院）的情形。</p>
+    <p class="lede">各地方法院的案件量差很多。選擇案件類別和指標，比較全國 22 所地方法院和高雄少年及家事法院的情形。</p>
     <div class="filters" id="courtFilters">
       <label>案件類別
         <select id="fCourtType">
@@ -68,8 +79,17 @@
       <label>月份
         <select id="fCourtMonth"></select>
       </label>
+      <label>法院
+        <select id="fCourt"></select>
+      </label>
     </div>
-    <div class="card" id="c-court-rank"></div>
+    <div class="grid court-pair">
+      <div class="card" id="c-court-rank"></div>
+      <div class="court-side">
+        <div class="card" id="c-court-detail"></div>
+        <div class="card" id="c-court-profile"></div>
+      </div>
+    </div>
     <div class="grid two">
       <div class="card" id="c-court-days"></div>
       <div class="card" id="c-court-pending"></div>
