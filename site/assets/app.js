@@ -503,18 +503,15 @@
         <dl>${lines.map(([k, v]) => `<div><dt>${k}</dt><dd>${fmt(v)}<span>件</span></dd></div>`).join('')}</dl>
       </div>`;
     const tier = (cls, name, role) => `<div class="lvl-label ${cls}"><b>${name}</b><span>${role}</span></div>`;
-    const appeal = (cls) => `<div class="appeal ${cls}" aria-hidden="true"></div>`;
     document.getElementById('ladder').innerHTML = `
       <div class="col-head h-general">普通法院<span>民事、刑事、家事</span></div>
       <div class="col-head h-admin">行政法院<span>人民告政府</span></div>
       ${tier('t3', '第三審', '終審')}
       ${box('最高法院', [['民事', n(5)], ['刑事', n(7)]], 'c-sup')}
       ${box('最高行政法院', [['行政訴訟', n(9)]], 'c-supadm')}
-      ${appeal('a-gen1')}${appeal('a-adm')}
       ${tier('t2', '第二審', '上訴審')}
       ${box('高等法院及分院', [['民事', n(18)], ['刑事', n(20)]], 'c-high')}
       ${box('高等行政法院', [['行政訴訟', n(11)]], 'c-highadm', '件數含院內地方行政訴訟庭')}
-      ${appeal('a-gen2')}
       ${tier('t1', '第一審', '起訴、聲請')}
       ${box('地方法院', [['民事', n(22)], ['刑事', n(38)], ['家事', n(32)]], 'c-dist', '22 所地方法院及高雄少年及家事法院')}
       <div class="rung c-admlocal"><strong>地方行政訴訟庭</strong><small>設在高等行政法院內，審理行政訴訟第一審；件數併入上方高等行政法院</small></div>

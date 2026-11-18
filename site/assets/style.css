@@ -261,11 +261,11 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 /* 法院層級圖（依 ui-ux-pro-max「Government/Public Service」建議：Minimalism & Swiss + Accessible & Ethical）
    - 不用顏色條：以網格、字級、字重建立層次；單一強調色只留給互動元素
    - 間距 8px 倍數；圓角 6px；不用陰影與卡片邊框
-   - 文字對比以 7:1 為目標（註解改用 text-secondary）；有意義的圖形（上訴箭頭）≥ 3:1 */
+   - 文字對比以 7:1 為目標（註解改用 text-secondary） */
 .ladder {
   display: grid;
   grid-template-columns: 104px minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto 40px auto 40px auto auto auto;
+  grid-template-rows: auto auto 24px auto 24px auto auto auto;
   column-gap: 16px; margin-top: 16px;
 }
 .col-head { grid-row: 1; font-size: 15px; font-weight: 650; color: var(--text-primary); padding: 0 0 8px; display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--grid); margin-bottom: 16px; }
@@ -299,12 +299,6 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 .c-admlocal { grid-row: 6; grid-column: 3; background: transparent; border: 1px dashed var(--baseline); }
 .c-dist { grid-row: 6; grid-column: 2; }
 
-/* 上訴箭頭：線與三角形用 axis-muted（對比 ≥ 3:1）；不加文字，說明見卡片上方「第一審 → 第二審 → 第三審」 */
-.appeal { position: relative; display: flex; align-items: center; justify-content: center; }
-.appeal::before { content: ""; position: absolute; top: 8px; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--axis-muted); }
-.appeal::after { content: ""; position: absolute; top: 0; left: calc(50% - 5px); border: 5px solid transparent; border-bottom: 8px solid var(--axis-muted); border-top: 0; }
-.a-gen1 { grid-row: 3; grid-column: 2; } .a-adm { grid-row: 3; grid-column: 3; } .a-gen2 { grid-row: 5; grid-column: 2; }
-
 .ladder-divider { grid-row: 7; grid-column: 1 / -1; border-top: 1px solid var(--grid); margin: 24px 0 8px; }
 /* 專業法院：三格合成一塊面板，用細分隔線分格，避免三張卡片和上方兩欄的邊界對不齊 */
 .rung-row { grid-row: 8; grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--surface-2); border-radius: 6px; }
@@ -314,7 +308,7 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 @media (max-width: 640px) {
   .ladder { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; row-gap: 8px; }
   .ladder > * { grid-column: 1 !important; grid-row: auto !important; }
-  .col-head, .appeal { display: none; }
+  .col-head { display: none; }
   .lvl-label { flex-direction: row; align-items: baseline; gap: 8px; padding-top: 16px; }
   .ladder-divider { margin: 8px 0 0; }
   .rung-row { grid-template-columns: minmax(0, 1fr); }
