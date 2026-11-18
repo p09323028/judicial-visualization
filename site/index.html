@@ -11,7 +11,7 @@
 </script>
 </head>
 <body>
-<a class="skip-link" href="#main">跳到主要內容</a>
+<a class="skip-link" href="#main" data-i18n="skip">跳到主要內容</a>
 <header class="site-header">
   <div class="wrap header-row">
     <div class="brand">
@@ -19,41 +19,44 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M7 21h10"/><path d="M5 7h14"/><path d="M12 5.5 5 7l-3 7a3.5 3.5 0 0 0 6 0L5 7"/><path d="m19 7-3 7a3.5 3.5 0 0 0 6 0l-3-7"/></svg>
       </span>
       <div>
-        <h1>司法統計視覺化</h1>
-        <p class="sub">資料更新至 <strong id="asof">—</strong><span class="dot" aria-hidden="true">·</span>來源：司法院統計月報</p>
+        <h1 data-i18n="site-title">司法統計視覺化</h1>
+        <p class="sub" data-i18n="sub">資料更新至 <strong id="asof">—</strong><span class="dot" aria-hidden="true">·</span>來源：司法院統計月報</p>
       </div>
     </div>
-    <button id="themeBtn" class="ghost-btn" type="button" aria-label="切換亮色／暗色模式">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>主題
-    </button>
+    <div class="header-actions">
+      <button id="langBtn" class="ghost-btn" type="button">EN</button>
+      <button id="themeBtn" class="ghost-btn" type="button" aria-label="切換亮色／暗色模式">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg><span data-i18n="theme">主題</span>
+      </button>
+    </div>
   </div>
   <nav class="wrap tabs" role="tablist" aria-label="主題">
-    <button role="tab" data-tab="home" aria-selected="true">總覽</button>
-    <button role="tab" data-tab="courts">案件與法院</button>
-    <button role="tab" data-tab="levels">各級法院</button>
-    <button role="tab" data-tab="crime">刑事犯罪</button>
-    <button role="tab" data-tab="life">保護令與卡債</button>
-    <button role="tab" data-tab="youth">少年與通訊監察</button>
-    <button role="tab" data-tab="glossary">名詞解釋</button>
+    <button role="tab" data-tab="home" aria-selected="true" data-i18n="tab-home">總覽</button>
+    <button role="tab" data-tab="courts" data-i18n="tab-courts">案件與法院</button>
+    <button role="tab" data-tab="levels" data-i18n="tab-levels">各級法院</button>
+    <button role="tab" data-tab="crime" data-i18n="tab-crime">刑事犯罪</button>
+    <button role="tab" data-tab="life" data-i18n="tab-life">保護令與卡債</button>
+    <button role="tab" data-tab="youth" data-i18n="tab-youth">少年與通訊監察</button>
+    <button role="tab" data-tab="glossary" data-i18n="tab-glossary">名詞解釋</button>
   </nav>
 </header>
 
 <main class="wrap" id="main" tabindex="-1">
   <!-- 總覽 -->
   <section id="tab-home" class="tab-panel" role="tabpanel">
-    <p class="lede">臺灣各級法院每年要處理超過 400 萬件案件。這裡用圖表整理司法院每月公布的統計，帶你快速了解法院在忙什麼、案件量怎麼變化。</p>
-    <h2 class="section-title"><span id="ytdLabel">今年</span>累計重點</h2>
+    <p class="lede" data-i18n="home-lede">臺灣各級法院每年要處理超過 400 萬件案件。這裡用圖表整理司法院每月公布的統計，帶你快速了解法院在忙什麼、案件量怎麼變化。</p>
+    <h2 class="section-title" data-i18n="home-ytd"><span id="ytdLabel">今年</span>累計重點</h2>
     <div class="tiles" id="homeTiles"></div>
-    <h2 class="section-title">互動探索</h2>
+    <h2 class="section-title" data-i18n="home-explore">互動探索</h2>
     <div class="filters linkbar" role="group" aria-label="總覽圖表篩選">
-      <label for="hYear">年份
+      <label for="hYear"><span data-i18n="f-year">年份</span>
         <select id="hYear"></select>
       </label>
-      <label for="hCat">案件類別
+      <label for="hCat"><span data-i18n="f-cat">案件類別</span>
         <select id="hCat"></select>
       </label>
-      <button id="hReset" class="ghost-btn" type="button" hidden>清除選取</button>
-      <p class="linkbar-note">也可以直接點圖表：三張圖會一起變。</p>
+      <button id="hReset" class="ghost-btn" type="button" hidden data-i18n="reset">清除選取</button>
+      <p class="linkbar-note" data-i18n="linkbar-note">也可以直接點圖表：三張圖會一起變。</p>
     </div>
     <div class="grid two">
       <div class="card" id="c-home-trend"></div>
@@ -64,27 +67,27 @@
 
   <!-- 案件與法院 -->
   <section id="tab-courts" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">各地方法院的案件量差很多。選擇案件類別和指標，比較全國 22 所地方法院和高雄少年及家事法院的情形。</p>
+    <p class="lede" data-i18n="courts-lede">各地方法院的案件量差很多。選擇案件類別和指標，比較全國 22 所地方法院和高雄少年及家事法院的情形。</p>
     <div class="filters" id="courtFilters">
-      <label>案件類別
+      <label><span data-i18n="f-type">案件類別</span>
         <select id="fCourtType">
-          <option value="civil">民事</option>
-          <option value="criminal" selected>刑事</option>
-          <option value="family">家事</option>
+          <option value="civil" data-i18n="o-civil">民事</option>
+          <option value="criminal" selected data-i18n="o-criminal">刑事</option>
+          <option value="family" data-i18n="o-family">家事</option>
         </select>
       </label>
-      <label>指標
+      <label><span data-i18n="f-metric">指標</span>
         <select id="fCourtMetric">
-          <option value="new">新收件數</option>
-          <option value="closed">終結件數</option>
-          <option value="pending">未結件數</option>
-          <option value="days">平均審理天數</option>
+          <option value="new" data-i18n="o-new">新收件數</option>
+          <option value="closed" data-i18n="o-closed">終結件數</option>
+          <option value="pending" data-i18n="o-pending">未結件數</option>
+          <option value="days" data-i18n="o-days">平均審理天數</option>
         </select>
       </label>
-      <label>月份
+      <label><span data-i18n="f-month">月份</span>
         <select id="fCourtMonth"></select>
       </label>
-      <label>法院
+      <label><span data-i18n="f-court">法院</span>
         <select id="fCourt"></select>
       </label>
     </div>
@@ -99,7 +102,7 @@
       <div class="card" id="c-court-days"></div>
       <div class="card" id="c-court-pending"></div>
     </div>
-    <h2 class="section-title">十年來各類案件新收件數</h2>
+    <h2 class="section-title" data-i18n="courts-trend">十年來各類案件新收件數</h2>
     <div class="grid three">
       <div class="card" id="c-trend-civil"></div>
       <div class="card" id="c-trend-criminal"></div>
@@ -109,13 +112,13 @@
 
   <!-- 各級法院 -->
   <section id="tab-levels" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">案件不一定在地方法院就結束。不服判決可以上訴到高等法院、最高法院；告政府要找行政法院；公務員違法失職由懲戒法院審理；憲法爭議則由憲法法庭處理。</p>
+    <p class="lede" data-i18n="levels-lede">案件不一定在地方法院就結束。不服判決可以上訴到高等法院、最高法院；告政府要找行政法院；公務員違法失職由懲戒法院審理；憲法爭議則由憲法法庭處理。</p>
     <div class="card ladder-card">
-      <h3>臺灣的法院怎麼分層？</h3>
-      <p class="takeaway">一般案件大多是「三級三審」：第一審 → 第二審 → 第三審。下方數字是<span id="ladderPeriod">今年累計</span>新收件數。</p>
+      <h3 data-i18n="ladder-title">臺灣的法院怎麼分層？</h3>
+      <p class="takeaway" data-i18n="ladder-note">一般案件大多是「三級三審」：第一審 → 第二審 → 第三審。下方數字是<span id="ladderPeriod">今年累計</span>新收件數。</p>
       <div class="ladder" id="ladder"></div>
     </div>
-    <h2 class="section-title">上訴之後</h2>
+    <h2 class="section-title" data-i18n="levels-appeal">上訴之後</h2>
     <div class="grid two">
       <div class="card" id="c-lv-uphold"></div>
       <div class="card" id="c-lv-days"></div>
@@ -124,12 +127,12 @@
       <div class="card" id="c-lv-high"></div>
       <div class="card" id="c-lv-supreme"></div>
     </div>
-    <h2 class="section-title">行政法院：人民告政府</h2>
+    <h2 class="section-title" data-i18n="levels-admin">行政法院：人民告政府</h2>
     <div class="grid two">
       <div class="card" id="c-lv-admin-result"></div>
       <div class="card" id="c-lv-admin-trend"></div>
     </div>
-    <h2 class="section-title">憲法法庭、懲戒法院、智慧財產及商業法院</h2>
+    <h2 class="section-title" data-i18n="levels-special">憲法法庭、懲戒法院、智慧財產及商業法院</h2>
     <div class="grid three">
       <div class="card" id="c-lv-const"></div>
       <div class="card" id="c-lv-discipline"></div>
@@ -139,17 +142,17 @@
 
   <!-- 刑事犯罪 -->
   <section id="tab-crime" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">地方法院刑事第一審終結的案件中，哪些罪名最多？被告最後被判了什麼？</p>
+    <p class="lede" data-i18n="crime-lede">地方法院刑事第一審終結的案件中，哪些罪名最多？被告最後被判了什麼？</p>
     <div class="tiles" id="crimeTiles"></div>
     <div class="grid two">
       <div class="card" id="c-crime-top"></div>
       <div class="card" id="c-crime-trend"></div>
     </div>
     <div class="filters">
-      <label>罪名
+      <label><span data-i18n="f-crime">罪名</span>
         <select id="fVerdictCrime"></select>
       </label>
-      <label>月份
+      <label><span data-i18n="f-month">月份</span>
         <select id="fVerdictMonth"></select>
       </label>
     </div>
@@ -162,24 +165,24 @@
 
   <!-- 保護令與卡債 -->
   <section id="tab-life" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">和一般人生活最相關的法院業務：家庭暴力保護令、跟蹤騷擾保護令、卡債（消費者債務清理）與家事事件。</p>
-    <h2 class="section-title">家庭暴力保護令</h2>
+    <p class="lede" data-i18n="life-lede">和一般人生活最相關的法院業務：家庭暴力保護令、跟蹤騷擾保護令、卡債（消費者債務清理）與家事事件。</p>
+    <h2 class="section-title" data-i18n="life-dv">家庭暴力保護令</h2>
     <div class="tiles" id="dvTiles"></div>
     <div class="grid two">
       <div class="card" id="c-dv-trend"></div>
       <div class="card" id="c-dv-content"></div>
     </div>
-    <h2 class="section-title">跟蹤騷擾保護令</h2>
+    <h2 class="section-title" data-i18n="life-stalk">跟蹤騷擾保護令</h2>
     <div class="grid two">
       <div class="card" id="c-stalk-trend"></div>
       <div class="card" id="c-stalk-applicant"></div>
     </div>
-    <h2 class="section-title">卡債與消費者債務清理</h2>
+    <h2 class="section-title" data-i18n="life-debt">卡債與消費者債務清理</h2>
     <div class="grid two">
       <div class="card" id="c-debt-trend"></div>
       <div class="card" id="c-debt-discharge"></div>
     </div>
-    <h2 class="section-title">家事事件</h2>
+    <h2 class="section-title" data-i18n="life-family">家事事件</h2>
     <div class="grid two">
       <div class="card" id="c-family-trend"></div>
       <div class="card" id="c-family-type"></div>
@@ -188,14 +191,14 @@
 
   <!-- 少年與通訊監察 -->
   <section id="tab-youth" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">少年事件以保護、輔導為主，不以處罰為目的；通訊監察（監聽）與通信調取則需要法官核准，是保障人民隱私的重要關卡。</p>
-    <h2 class="section-title">少年及兒童保護事件</h2>
+    <p class="lede" data-i18n="youth-lede">少年事件以保護、輔導為主，不以處罰為目的；通訊監察（監聽）與通信調取則需要法官核准，是保障人民隱私的重要關卡。</p>
+    <h2 class="section-title" data-i18n="youth-cases">少年及兒童保護事件</h2>
     <div class="grid two">
       <div class="card" id="c-youth-trend"></div>
       <div class="card" id="c-youth-type"></div>
     </div>
     <div class="card" id="c-youth-disposal"></div>
-    <h2 class="section-title">通訊監察與通信調取</h2>
+    <h2 class="section-title" data-i18n="youth-wiretap">通訊監察與通信調取</h2>
     <div class="tiles" id="wiretapTiles"></div>
     <div class="grid two">
       <div class="card" id="c-wiretap"></div>
@@ -205,15 +208,15 @@
 
   <!-- 名詞解釋 -->
   <section id="tab-glossary" class="tab-panel" role="tabpanel" hidden>
-    <p class="lede">統計表裡的用語跟日常用法不太一樣，這裡用白話說明。</p>
+    <p class="lede" data-i18n="glossary-lede">統計表裡的用語跟日常用法不太一樣，這裡用白話說明。</p>
     <dl class="glossary" id="glossary"></dl>
     <div class="card note">
-      <h3>關於資料</h3>
+      <h3 data-i18n="about-title">關於資料</h3>
       <ul>
-        <li>資料來源為司法院每月公布的〈司法統計月報〉，以最新一期的數字為準（各期會修正前期數字）。</li>
-        <li>「年度」是完整一整年；「今年累計」是今年 1 月到最新月份的合計，和去年同期比較。</li>
-        <li>各法院比較使用單月資料。半年報（6 月）的機關別表是 1–6 月累計，網站用「累計減去 1～5 月單月」推算出 6 月單月，並標示為推算值。平均審理天數、維持率這類比率無法這樣還原，推算月份會留空。</li>
-        <li>本網站只挑選一般民眾較關心的數字；完整數字請參閱司法院統計專區。</li>
+        <li data-i18n="about-1">資料來源為司法院每月公布的〈司法統計月報〉，以最新一期的數字為準（各期會修正前期數字）。</li>
+        <li data-i18n="about-2">「年度」是完整一整年；「今年累計」是今年 1 月到最新月份的合計，和去年同期比較。</li>
+        <li data-i18n="about-3">各法院比較使用單月資料。半年報（6 月）的機關別表是 1–6 月累計，網站用「累計減去 1～5 月單月」推算出 6 月單月，並標示為推算值。平均審理天數、維持率這類比率無法這樣還原，推算月份會留空。</li>
+        <li data-i18n="about-4">本網站只挑選一般民眾較關心的數字；完整數字請參閱司法院統計專區。</li>
       </ul>
       <p class="muted" id="buildInfo"></p>
     </div>
@@ -221,12 +224,13 @@
 </main>
 
 <footer class="site-footer">
-  <p class="wrap">資料來源：司法院統計月報。圖表數字可點「查看數據」以表格檢視。</p>
+  <p class="wrap" data-i18n="footer">資料來源：司法院統計月報。圖表數字可點「查看數據」以表格檢視。</p>
 </footer>
 
 <div id="tooltipRoot"></div>
 <script src="assets/vendor/echarts.min.js"></script>
 <script src="data/data.js"></script>
+<script src="assets/i18n.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>
