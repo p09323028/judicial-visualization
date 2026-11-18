@@ -194,59 +194,64 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
   border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-width: 140px;
 }
 
-/* 法院層級圖：左欄層級、中欄普通法院、右欄行政法院；層級之間以「上訴」箭頭表示案件往上走 */
+/* 法院層級圖（依 ui-ux-pro-max「Government/Public Service」建議：Minimalism & Swiss + Accessible & Ethical）
+   - 不用顏色條：以網格、字級、字重建立層次；單一強調色只留給互動元素
+   - 間距 8px 倍數；圓角 6px；不用陰影與卡片邊框
+   - 文字對比以 7:1 為目標（註解改用 text-secondary）；有意義的圖形（上訴箭頭）≥ 3:1 */
 .ladder {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: auto auto 30px auto 30px auto auto auto;
-  column-gap: 12px; margin-top: 12px;
+  grid-template-columns: 104px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto 40px auto 40px auto auto auto;
+  column-gap: 16px; margin-top: 16px;
 }
-.col-head { grid-row: 1; font-size: 13px; font-weight: 650; color: var(--text-primary); padding: 0 2px 8px; display: flex; gap: 8px; align-items: baseline; }
-.col-head span { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+.col-head { grid-row: 1; font-size: 15px; font-weight: 650; color: var(--text-primary); padding: 0 0 8px; display: flex; gap: 8px; align-items: baseline; border-bottom: 1px solid var(--grid); margin-bottom: 16px; }
+.col-head span { font-size: 13px; font-weight: 400; color: var(--text-secondary); }
 .h-general { grid-column: 2; } .h-admin { grid-column: 3; }
 
-.lvl-label { grid-column: 1; align-self: center; display: flex; flex-direction: column; gap: 2px; }
-.lvl-label b { font-size: 14px; color: var(--text-primary); }
-.lvl-label span { font-size: 12px; color: var(--text-muted); line-height: 1.35; }
+.lvl-label { grid-column: 1; align-self: start; padding-top: 16px; display: flex; flex-direction: column; gap: 4px; }
+.lvl-label b { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.lvl-label span { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
 .lvl-label.t3 { grid-row: 2; } .lvl-label.t2 { grid-row: 4; } .lvl-label.t1 { grid-row: 6; } .lvl-label.ts { grid-row: 8; }
 
 .rung {
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
-  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0;
+  background: var(--surface-2); border-radius: 6px;
+  padding: 16px; display: flex; flex-direction: column; gap: 4px; min-width: 0;
 }
-.rung strong { font-size: 15px; font-weight: 650; color: var(--text-primary); }
-.rung small { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
-.rung dl { margin: 6px 0 0; display: grid; gap: 2px; }
-.rung dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border-top: 1px solid var(--grid); padding-top: 4px; }
+.rung strong { font-size: 16px; font-weight: 650; color: var(--text-primary); }
+.rung small { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.rung dl { margin: 8px 0 0; display: grid; gap: 0; }
+.rung dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-top: 1px solid var(--grid); padding: 6px 0; }
 .rung dl div:first-child { border-top: 0; padding-top: 0; }
-.rung dt { font-size: 13px; color: var(--text-secondary); }
-.rung dd { margin: 0; font-size: 17px; font-weight: 650; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.rung dd span { font-size: 12px; font-weight: 400; color: var(--text-muted); margin-left: 3px; }
+.rung dl div:last-child { padding-bottom: 0; }
+.rung dt { font-size: 14px; color: var(--text-secondary); }
+.rung dd { margin: 0; font-size: 18px; font-weight: 650; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rung dd span { font-size: 13px; font-weight: 400; color: var(--text-secondary); margin-left: 4px; }
 
 .c-sup { grid-row: 2; grid-column: 2; }
 .c-supadm { grid-row: 2; grid-column: 3; }
 .c-high { grid-row: 4; grid-column: 2; }
-.c-highadm { grid-row: 4 / 7; grid-column: 3; justify-content: center; }
+.c-highadm { grid-row: 4 / 7; grid-column: 3; }
 .c-dist { grid-row: 6; grid-column: 2; }
 
-/* 上訴箭頭：細線＋三角形，置於兩層卡片之間 */
+/* 上訴箭頭：線與三角形用 axis-muted（對比 ≥ 3:1），旁附文字，不只靠圖形表意 */
 .appeal { position: relative; display: flex; align-items: center; justify-content: center; }
-.appeal::before { content: ""; position: absolute; top: 6px; bottom: 0; left: 50%; width: 1px; background: var(--baseline); }
-.appeal::after { content: ""; position: absolute; top: 0; left: calc(50% - 4px); border: 4px solid transparent; border-bottom: 6px solid var(--baseline); border-top: 0; }
-.appeal span { position: relative; font-size: 11px; color: var(--text-muted); background: var(--surface-1); padding: 0 6px; line-height: 1; }
+.appeal::before { content: ""; position: absolute; top: 8px; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--axis-muted); }
+.appeal::after { content: ""; position: absolute; top: 0; left: calc(50% - 5px); border: 5px solid transparent; border-bottom: 8px solid var(--axis-muted); border-top: 0; }
+.appeal span { position: relative; font-size: 13px; color: var(--text-secondary); background: var(--surface-1); padding: 0 8px; line-height: 1.2; }
 .a-gen1 { grid-row: 3; grid-column: 2; } .a-adm { grid-row: 3; grid-column: 3; } .a-gen2 { grid-row: 5; grid-column: 2; }
 
-.ladder-divider { grid-row: 7; grid-column: 1 / -1; border-top: 1px solid var(--grid); margin: 18px 0 14px; }
-.rung-row { grid-row: 8; grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ladder-divider { grid-row: 7; grid-column: 1 / -1; border-top: 1px solid var(--grid); margin: 24px 0 8px; }
+.rung-row { grid-row: 8; grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 
 @media (max-width: 640px) {
   .ladder { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; row-gap: 8px; }
   .ladder > * { grid-column: 1 !important; grid-row: auto !important; }
   .col-head, .appeal { display: none; }
-  .lvl-label { flex-direction: row; align-items: baseline; gap: 8px; margin-top: 10px; }
+  .lvl-label { flex-direction: row; align-items: baseline; gap: 8px; padding-top: 16px; }
   .ladder-divider { margin: 8px 0 0; }
   .rung-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
+
 
 .hint { font-size: 12px; color: var(--accent); margin: -4px 0 6px; }
 .chart.clickable { cursor: pointer; }
