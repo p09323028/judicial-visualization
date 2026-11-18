@@ -1,11 +1,9 @@
 # 司法統計視覺化
 
-用司法院〈司法統計月報〉做給一般民眾看的視覺化網站（本機原型）。
+用司法院〈司法統計月報〉做給一般民眾看的視覺化網站。
 
-## 開啟網站
+[司法統計視覺化](https://p09323028.github.io/judicial-visualization/)
 
-直接用瀏覽器開啟 `site/index.html` 即可，不需要架伺服器（資料已打包成 `site/data/data.js`）。
-如果要用網址開啟：`python -m http.server 8765 -d site`，然後瀏覽 http://127.0.0.1:8765/
 
 ## 部署（GitHub Pages）
 
