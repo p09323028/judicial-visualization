@@ -48,7 +48,7 @@
     'about-title': 'About the data',
     'about-1': 'Data come from the Judicial Yuan’s monthly <i>Judicial Statistics</i> reports. The latest issue is used, since each issue revises earlier figures.',
     'about-2': '“Year” means a full calendar year; “this year” means January through the latest month, compared with the same period last year.',
-    'about-3': 'Court-by-court comparisons use single-month data. The half-year report (June) gives January–June totals by court, so the site estimates June by subtracting January–May and marks it as an estimate. Ratios such as average days or uphold rates can’t be recovered this way, so estimated months are left blank.',
+    'about-3': 'Court-by-court comparisons use single-month data. Every month shown is the Judicial Yuan’s published single-month figure; nothing is estimated.',
     'about-4': 'This site shows only the figures most relevant to the public; see the Judicial Yuan’s statistics portal for the full tables. Years are shown in the Gregorian calendar (ROC year + 1911).',
     'footer': 'Source: Judicial Yuan Monthly Judicial Statistics. Click “View data” on any chart to see the numbers as a table.',
   };
