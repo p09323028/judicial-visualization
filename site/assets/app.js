@@ -71,6 +71,17 @@
   const lastSnapshot = (t) => { const ks = Object.keys(tbl(t).months); return ks[ks.length - 1]; };
   const isDistrictCourt = (n) => /^(臺灣|福建).+(地方法院|少家法院)$/.test(n);
   const sum = (arr) => arr.reduce((a, b) => a + (b || 0), 0);
+  // 平均天數這類比率沒有官方的「較去年同期」，用每月平均天數 × 終結件數加權，重算去年同期（1 月～最新月份）的平均
+  const prevYtdAvg = (t, col, weightCol) => {
+    const mo = tbl(t).monthly || {};
+    let num = 0, den = 0;
+    for (let m = 1; m <= LM; m++) {
+      const r = mo[`${LY - 1}-${String(m).padStart(2, '0')}`];
+      if (r?.[col] == null || !r[weightCol]) return null;
+      num += r[col] * r[weightCol]; den += r[weightCol];
+    }
+    return den ? num / den : null;
+  };
 
   // ---------- 卡片與圖表 ----------
   const charts = [];
@@ -287,7 +298,12 @@
       { label: tr('地方法院民事新收', 'District court civil cases'), value: ytd(22, '受理件數/新收'), unit: '件', delta: yoy(22, '受理件數/新收') },
       { label: tr('詐欺罪第一審終結', 'Fraud cases closed'), value: ytd(41, '詐欺罪'), unit: '件', delta: yoy(41, '詐欺罪') },
       { label: tr('家暴保護令聲請（新收）', 'DV protection order petitions'), value: ytd(35, '受理件數/新收'), unit: '件', delta: yoy(35, '受理件數/新收') },
-      { label: tr('刑事案件平均審理天數', 'Avg. days per criminal case'), value: fmt(ytd(38, '終結事件平均一件所需日數'), 1), raw: true, unit: '天', note: tr('地方法院，今年累計', 'District courts, year to date') },
+      (() => {
+        const col = '終結事件平均一件所需日數', cur = ytd(38, col), prev = prevYtdAvg(38, col, '終結件數');
+        return { label: tr('地方法院刑事平均審理天數', 'District court criminal: avg. days'), value: fmt(cur, 1), raw: true, unit: '天',
+          delta: cur != null && prev != null ? cur - prev : null, deltaUnit: tr(' 天', ' days'),
+          note: tr('地方法院，今年累計', 'District courts, year to date') };
+      })(),
     ]);
 
     homeState = { year: null, cat: null };
