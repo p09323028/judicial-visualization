@@ -194,25 +194,58 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
   border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; min-width: 140px;
 }
 
+/* 法院層級圖：左欄層級、中欄普通法院、右欄行政法院；層級之間以「上訴」箭頭表示案件往上走 */
 .ladder {
-  display: grid; grid-template-columns: 88px minmax(0, 1fr) minmax(0, 1fr); gap: 8px; margin-top: 8px;
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto 30px auto 30px auto auto auto;
+  column-gap: 12px; margin-top: 12px;
 }
-.lvl-label { align-self: center; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.col-head { grid-row: 1; font-size: 13px; font-weight: 650; color: var(--text-primary); padding: 0 2px 8px; display: flex; gap: 8px; align-items: baseline; }
+.col-head span { font-size: 12px; font-weight: 400; color: var(--text-muted); }
+.h-general { grid-column: 2; } .h-admin { grid-column: 3; }
+
+.lvl-label { grid-column: 1; align-self: center; display: flex; flex-direction: column; gap: 2px; }
+.lvl-label b { font-size: 14px; color: var(--text-primary); }
+.lvl-label span { font-size: 12px; color: var(--text-muted); line-height: 1.35; }
+.lvl-label.t3 { grid-row: 2; } .lvl-label.t2 { grid-row: 4; } .lvl-label.t1 { grid-row: 6; } .lvl-label.ts { grid-row: 8; }
+
 .rung {
-  background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
-  border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0;
 }
-.rung strong { font-size: 15px; }
-.rung span { font-size: 13px; color: var(--text-secondary); }
-.rung b { color: var(--text-primary); font-weight: 600; font-variant-numeric: tabular-nums; }
-.rung.span2 { grid-row: span 2; justify-content: center; }
-.rung-row { grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.rung-row .rung { border-left-color: var(--series-3); }
-@media (max-width: 600px) {
-  .ladder { grid-template-columns: minmax(0, 1fr); }
-  .rung.span2 { grid-row: auto; }
-  .rung-row { grid-column: auto; grid-template-columns: minmax(0, 1fr); }
-  .lvl-label { margin-top: 6px; }
+.rung strong { font-size: 15px; font-weight: 650; color: var(--text-primary); }
+.rung small { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+.rung dl { margin: 6px 0 0; display: grid; gap: 2px; }
+.rung dl div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; border-top: 1px solid var(--grid); padding-top: 4px; }
+.rung dl div:first-child { border-top: 0; padding-top: 0; }
+.rung dt { font-size: 13px; color: var(--text-secondary); }
+.rung dd { margin: 0; font-size: 17px; font-weight: 650; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rung dd span { font-size: 12px; font-weight: 400; color: var(--text-muted); margin-left: 3px; }
+
+.c-sup { grid-row: 2; grid-column: 2; }
+.c-supadm { grid-row: 2; grid-column: 3; }
+.c-high { grid-row: 4; grid-column: 2; }
+.c-highadm { grid-row: 4 / 7; grid-column: 3; justify-content: center; }
+.c-dist { grid-row: 6; grid-column: 2; }
+
+/* 上訴箭頭：細線＋三角形，置於兩層卡片之間 */
+.appeal { position: relative; display: flex; align-items: center; justify-content: center; }
+.appeal::before { content: ""; position: absolute; top: 6px; bottom: 0; left: 50%; width: 1px; background: var(--baseline); }
+.appeal::after { content: ""; position: absolute; top: 0; left: calc(50% - 4px); border: 4px solid transparent; border-bottom: 6px solid var(--baseline); border-top: 0; }
+.appeal span { position: relative; font-size: 11px; color: var(--text-muted); background: var(--surface-1); padding: 0 6px; line-height: 1; }
+.a-gen1 { grid-row: 3; grid-column: 2; } .a-adm { grid-row: 3; grid-column: 3; } .a-gen2 { grid-row: 5; grid-column: 2; }
+
+.ladder-divider { grid-row: 7; grid-column: 1 / -1; border-top: 1px solid var(--grid); margin: 18px 0 14px; }
+.rung-row { grid-row: 8; grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+@media (max-width: 640px) {
+  .ladder { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; row-gap: 8px; }
+  .ladder > * { grid-column: 1 !important; grid-row: auto !important; }
+  .col-head, .appeal { display: none; }
+  .lvl-label { flex-direction: row; align-items: baseline; gap: 8px; margin-top: 10px; }
+  .ladder-divider { margin: 8px 0 0; }
+  .rung-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
 }
 
 .hint { font-size: 12px; color: var(--accent); margin: -4px 0 6px; }
