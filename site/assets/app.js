@@ -985,7 +985,8 @@
   ];
   function renderGlossary() {
     document.getElementById('glossary').innerHTML = (EN ? GLOSSARY_EN : GLOSSARY).map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('');
-    document.getElementById('buildInfo').textContent = tr(`資料涵蓋 ${META.months.map(per).join('、')} 月報；網站資料產生時間：${META.built}。`, `Covers the monthly reports for ${META.months.map(per).join(', ')}. Site data generated ${META.built}.`);
+    const m0 = per(META.months[0]), m1 = per(META.months[META.months.length - 1]), built = META.built.slice(0, 10);
+    document.getElementById('buildInfo').innerHTML = tr(`資料涵蓋 ${m0}～${m1}月報；<br>網站資料產生時間：${built}。`, `Covers the monthly reports from ${m0} to ${m1}.<br>Site data generated: ${built}.`);
   }
 
   // ---------- 分頁、主題 ----------
