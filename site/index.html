@@ -11,16 +11,21 @@
 </script>
 </head>
 <body>
+<a class="skip-link" href="#main">跳到主要內容</a>
 <header class="site-header">
   <div class="wrap header-row">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">⚖</span>
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M7 21h10"/><path d="M5 7h14"/><path d="M12 5.5 5 7l-3 7a3.5 3.5 0 0 0 6 0L5 7"/><path d="m19 7-3 7a3.5 3.5 0 0 0 6 0l-3-7"/></svg>
+      </span>
       <div>
         <h1>司法統計視覺化</h1>
-        <p class="sub">資料更新至 <strong id="asof">—</strong>　·　來源：司法院統計月報</p>
+        <p class="sub">資料更新至 <strong id="asof">—</strong><span class="dot" aria-hidden="true">·</span>來源：司法院統計月報</p>
       </div>
     </div>
-    <button id="themeBtn" class="ghost-btn" type="button" aria-label="切換亮色／暗色模式">◐ 主題</button>
+    <button id="themeBtn" class="ghost-btn" type="button" aria-label="切換亮色／暗色模式">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>主題
+    </button>
   </div>
   <nav class="wrap tabs" role="tablist" aria-label="主題">
     <button role="tab" data-tab="home" aria-selected="true">總覽</button>
@@ -33,7 +38,7 @@
   </nav>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="main" tabindex="-1">
   <!-- 總覽 -->
   <section id="tab-home" class="tab-panel" role="tabpanel">
     <p class="lede">臺灣各級法院每年要處理超過 400 萬件案件。這裡用圖表整理司法院每月公布的統計，帶你快速了解法院在忙什麼、案件量怎麼變化。</p>
@@ -215,8 +220,8 @@
   </section>
 </main>
 
-<footer class="site-footer wrap">
-  <p>資料來源：司法院統計月報。圖表數字可點「查看數據」以表格檢視。</p>
+<footer class="site-footer">
+  <p class="wrap">資料來源：司法院統計月報。圖表數字可點「查看數據」以表格檢視。</p>
 </footer>
 
 <div id="tooltipRoot"></div>
