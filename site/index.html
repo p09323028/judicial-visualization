@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>司法統計視覺化</title>
+<meta name="description" content="用圖表看懂臺灣法院的案件趨勢：整體案件量、刑事犯罪、保護令、卡債、少年事件與通訊監察。">
+<link rel="stylesheet" href="assets/style.css">
+<script>
+  try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-row">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">⚖</span>
+      <div>
+        <h1>司法統計視覺化</h1>
+        <p class="sub">資料更新至 <strong id="asof">—</strong>　·　來源：司法院統計月報</p>
+      </div>
+    </div>
+    <button id="themeBtn" class="ghost-btn" type="button" aria-label="切換亮色／暗色模式">◐ 主題</button>
+  </div>
+  <nav class="wrap tabs" role="tablist" aria-label="主題">
+    <button role="tab" data-tab="home" aria-selected="true">總覽</button>
+    <button role="tab" data-tab="courts">案件與法院</button>
+    <button role="tab" data-tab="levels">各級法院</button>
+    <button role="tab" data-tab="crime">刑事犯罪</button>
+    <button role="tab" data-tab="life">保護令與卡債</button>
+    <button role="tab" data-tab="youth">少年與通訊監察</button>
+    <button role="tab" data-tab="glossary">名詞解釋</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <!-- 總覽 -->
+  <section id="tab-home" class="tab-panel" role="tabpanel">
+    <p class="lede">臺灣各級法院每年要處理超過 400 萬件案件。這裡用圖表整理司法院每月公布的統計，帶你快速了解法院在忙什麼、案件量怎麼變化。</p>
+    <h2 class="section-title"><span id="ytdLabel">今年</span>累計重點</h2>
+    <div class="tiles" id="homeTiles"></div>
+    <div class="grid two">
+      <div class="card" id="c-home-trend"></div>
+      <div class="card" id="c-home-mix"></div>
+    </div>
+    <div class="card" id="c-home-monthly"></div>
+  </section>
+
+  <!-- 案件與法院 -->
+  <section id="tab-courts" class="tab-panel" role="tabpanel" hidden>
+    <p class="lede">各地方法院的案件量差很多。選擇案件類別和指標，比較 22 所地方法院（含高雄少家法院）的情形。</p>
+    <div class="filters" id="courtFilters">
+      <label>案件類別
+        <select id="fCourtType">
+          <option value="civil">民事</option>
+          <option value="criminal" selected>刑事</option>
+          <option value="family">家事</option>
+        </select>
+      </label>
+      <label>指標
+        <select id="fCourtMetric">
+          <option value="new">新收件數</option>
+          <option value="closed">終結件數</option>
+          <option value="pending">未結件數</option>
+          <option value="days">平均審理天數</option>
+        </select>
+      </label>
+      <label>月份
+        <select id="fCourtMonth"></select>
+      </label>
+    </div>
+    <div class="card" id="c-court-rank"></div>
+    <div class="grid two">
+      <div class="card" id="c-court-days"></div>
+      <div class="card" id="c-court-pending"></div>
+    </div>
+    <h2 class="section-title">十年來各類案件新收件數</h2>
+    <div class="grid three">
+      <div class="card" id="c-trend-civil"></div>
+      <div class="card" id="c-trend-criminal"></div>
+      <div class="card" id="c-trend-family"></div>
+    </div>
+  </section>
+
+  <!-- 各級法院 -->
+  <section id="tab-levels" class="tab-panel" role="tabpanel" hidden>
+    <p class="lede">案件不一定在地方法院就結束。不服判決可以上訴到高等法院、最高法院；告政府要找行政法院；公務員違法失職由懲戒法院審理；憲法爭議則由憲法法庭處理。</p>
+    <div class="card ladder-card">
+      <h3>臺灣的法院怎麼分層？</h3>
+      <p class="takeaway">一般案件大多是「三級三審」：第一審 → 第二審 → 第三審。下方數字是<span id="ladderPeriod">今年累計</span>新收件數。</p>
+      <div class="ladder" id="ladder"></div>
+    </div>
+    <h2 class="section-title">上訴之後</h2>
+    <div class="grid two">
+      <div class="card" id="c-lv-uphold"></div>
+      <div class="card" id="c-lv-days"></div>
+    </div>
+    <div class="grid two">
+      <div class="card" id="c-lv-high"></div>
+      <div class="card" id="c-lv-supreme"></div>
+    </div>
+    <h2 class="section-title">行政法院：人民告政府</h2>
+    <div class="grid two">
+      <div class="card" id="c-lv-admin-result"></div>
+      <div class="card" id="c-lv-admin-trend"></div>
+    </div>
+    <h2 class="section-title">憲法法庭、懲戒法院、智慧財產及商業法院</h2>
+    <div class="grid three">
+      <div class="card" id="c-lv-const"></div>
+      <div class="card" id="c-lv-discipline"></div>
+      <div class="card" id="c-lv-ip"></div>
+    </div>
+  </section>
+
+  <!-- 刑事犯罪 -->
+  <section id="tab-crime" class="tab-panel" role="tabpanel" hidden>
+    <p class="lede">地方法院刑事第一審終結的案件中，哪些罪名最多？被告最後被判了什麼？</p>
+    <div class="tiles" id="crimeTiles"></div>
+    <div class="grid two">
+      <div class="card" id="c-crime-top"></div>
+      <div class="card" id="c-crime-trend"></div>
+    </div>
+    <div class="filters">
+      <label>罪名
+        <select id="fVerdictCrime"></select>
+      </label>
+      <label>月份
+        <select id="fVerdictMonth"></select>
+      </label>
+    </div>
+    <div class="grid two">
+      <div class="card" id="c-verdict"></div>
+      <div class="card" id="c-prison"></div>
+    </div>
+    <div class="card" id="c-probation"></div>
+  </section>
+
+  <!-- 保護令與卡債 -->
+  <section id="tab-life" class="tab-panel" role="tabpanel" hidden>
+    <p class="lede">和一般人生活最相關的法院業務：家庭暴力保護令、跟蹤騷擾保護令、卡債（消費者債務清理）與家事事件。</p>
+    <h2 class="section-title">家庭暴力保護令</h2>
+    <div class="tiles" id="dvTiles"></div>
+    <div class="grid two">
+      <div class="card" id="c-dv-trend"></div>
+      <div class="card" id="c-dv-content"></div>
+    </div>
+    <h2 class="section-title">跟蹤騷擾保護令</h2>
+    <div class="grid two">
+      <div class="card" id="c-stalk-trend"></div>
+      <div class="card" id="c-stalk-applicant"></div>
+    </div>
+    <h2 class="section-title">卡債與消費者債務清理</h2>
+    <div class="grid two">
+      <div class="card" id="c-debt-trend"></div>
+      <div class="card" id="c-debt-discharge"></div>
+    </div>
+    <h2 class="section-title">家事事件</h2>
+    <div class="grid two">
+      <div class="card" id="c-family-trend"></div>
+      <div class="card" id="c-family-type"></div>
+    </div>
+  </section>
+
+  <!-- 少年與通訊監察 -->
+  <section id="tab-youth" class="tab-panel" role="tabpanel" hidden>
+    <p class="lede">少年事件以保護、輔導為主，不以處罰為目的；通訊監察（監聽）與通信調取則需要法官核准，是保障人民隱私的重要關卡。</p>
+    <h2 class="section-title">少年及兒童保護事件</h2>
+    <div class="grid two">
+      <div class="card" id="c-youth-trend"></div>
+      <div class="card" id="c-youth-type"></div>
+    </div>
+    <div class="card" id="c-youth-disposal"></div>
+    <h2 class="section-title">通訊監察與通信調取</h2>
+    <div class="tiles" id="wiretapTiles"></div>
+    <div class="grid two">
+      <div class="card" id="c-wiretap"></div>
+      <div class="card" id="c-retrieve"></div>
+    </div>
+  </section>
+
+  <!-- 名詞解釋 -->
+  <section id="tab-glossary" class="tab-panel" role="tabpanel" hidden>
+    <p class="lede">統計表裡的用語跟日常用法不太一樣，這裡用白話說明。</p>
+    <dl class="glossary" id="glossary"></dl>
+    <div class="card note">
+      <h3>關於資料</h3>
+      <ul>
+        <li>資料來源為司法院每月公布的〈司法統計月報〉，以最新一期的數字為準（各期會修正前期數字）。</li>
+        <li>「年度」是完整一整年；「今年累計」是今年 1 月到最新月份的合計，和去年同期比較。</li>
+        <li>各法院比較使用單月資料。半年報（6 月）為 1–6 月累計，不列入單月比較。</li>
+        <li>本網站只挑選一般民眾較關心的數字；完整數字請參閱司法院統計專區。</li>
+      </ul>
+      <p class="muted" id="buildInfo"></p>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer wrap">
+  <p>資料來源：司法院統計月報。圖表數字可點「查看數據」以表格檢視。</p>
+</footer>
+
+<div id="tooltipRoot"></div>
+<script src="assets/vendor/echarts.min.js"></script>
+<script src="data/data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

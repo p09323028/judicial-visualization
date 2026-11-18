@@ -1,0 +1,61 @@
+# 司法統計視覺化
+
+用司法院〈司法統計月報〉做給一般民眾看的視覺化網站（本機原型）。
+
+## 開啟網站
+
+直接用瀏覽器開啟 `site/index.html` 即可，不需要架伺服器（資料已打包成 `site/data/data.js`）。
+如果要用網址開啟：`python -m http.server 8765 -d site`，然後瀏覽 http://127.0.0.1:8765/
+
+## 部署（GitHub Pages）
+
+推送到 `main` 分支後，`.github/workflows/pages.yml` 會自動把 `site/` 資料夾部署到 GitHub Pages。
+每月更新資料後：
+
+```
+python scripts/build_data.py
+git add -A
+git commit -m "更新至 115年10月"
+git push
+```
+
+## 每月更新
+
+1. 把新月份的資料夾（例如 `11510`，內含 `表01.xlsx`～`表56.xlsx`）放進 `月報/`
+2. 執行：
+   ```
+   python scripts/build_data.py
+   ```
+3. 重新整理網頁。
+
+腳本會：
+- 依月份由舊到新讀取，**新一期的數字覆蓋舊一期**（各期會修正前期數字）
+- 檢查「今年累計新收 = 各月加總」與「各地方法院加總 = 臺灣各地方法院計」
+- 機關別表若標示的期別和資料夾月份不符，會跳過並列出警告
+- 半年報（6 月）的機關別表是 1–6 月累計，不列入單月比較
+
+測試用：`python scripts/build_data.py --until 11508` 只處理到指定月份。
+
+## 結構
+
+| 路徑 | 說明 |
+|---|---|
+| `月報/115MM/表NN.xlsx` | 原始月報（不修改） |
+| `scripts/build_data.py` | Excel → JSON。通用解析器，自動讀取多層表頭與續表分頁 |
+| `site/index.html` | 單頁網站，分 7 個分頁 |
+| `site/assets/app.js` | 圖表與文字（ECharts） |
+| `site/assets/style.css` | 版面與亮色／暗色主題 |
+| `site/assets/vendor/echarts.min.js` | ECharts 5.5.1（本機檔，不依賴 CDN） |
+| `site/data/` | 腳本產生的資料（`tNN.json`、`meta.json`、`data.js`） |
+
+## 使用的表
+
+- 總覽／案件與法院：表01、22、23、32、33、38、39、56
+- 各級法院：表03、05–14、16、18、20、22、32、38
+- 刑事犯罪：表41、42、43、55
+- 保護令與卡債：表27、29、30、34、35
+- 少年與通訊監察：表46、47、51、52
+- 另外有解析但網站尚未使用：表02、04、15、17、19、21、28、31、36、44、45、48、49、50、53、54
+
+要新增圖表時，在 `scripts/build_data.py` 的 `TABLES` 加入表號，再到 `app.js` 用 `tbl(表號)` 取資料。
+欄位名稱是多層表頭用「/」連起來的中文，例如 `受理件數/新收`，可在 `site/data/tNN.json` 的 `columns` 查到。
