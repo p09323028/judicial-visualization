@@ -30,7 +30,7 @@ git push
 - 依月份由舊到新讀取，**新一期的數字覆蓋舊一期**（各期會修正前期數字）
 - 檢查「今年累計新收 = 各月加總」與「各地方法院加總 = 臺灣各地方法院計」
 - 機關別表若標示的期別和資料夾月份不符，會跳過並列出警告
-- 每個月份都使用司法院公布的單月月報，6 月也一樣（不要放半年報的 1–6 月累計表）
+- 每個月份都使用司法院公布的單月月報。
 
 測試用：`python scripts/build_data.py --until 11508` 只處理到指定月份。
 
@@ -38,12 +38,13 @@ git push
 
 | 路徑 | 說明 |
 |---|---|
-| `月報/115MM/表NN.xlsx` | 原始月報（不修改） |
+| `月報/YYYMM/表NN.xlsx` | 原始月報（不修改），資料夾以民國年月命名，例如 `11409` |
 | `scripts/build_data.py` | Excel → JSON。通用解析器，自動讀取多層表頭與續表分頁 |
 | `site/index.html` | 單頁網站，分 7 個分頁 |
 | `site/assets/app.js` | 圖表與文字（ECharts） |
+| `site/assets/i18n.js` | 中英文切換：英文版文字與資料標籤對照（網址加 `?lang=en` 直接開英文版） |
 | `site/assets/style.css` | 版面與亮色／暗色主題 |
-| `site/assets/vendor/echarts.min.js` | ECharts 5.5.1（本機檔，不依賴 CDN） |
+| `site/assets/vendor/echarts.min.js` | ECharts 5.6.0（本機檔，不依賴 CDN） |
 | `site/data/` | 腳本產生的資料（`tNN.json`、`meta.json`、`data.js`） |
 
 ## 使用的表
