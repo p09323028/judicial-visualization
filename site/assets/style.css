@@ -299,11 +299,10 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 .c-admlocal { grid-row: 6; grid-column: 3; background: transparent; border: 1px dashed var(--baseline); }
 .c-dist { grid-row: 6; grid-column: 2; }
 
-/* 上訴箭頭：線與三角形用 axis-muted（對比 ≥ 3:1），旁附文字，不只靠圖形表意 */
+/* 上訴箭頭：線與三角形用 axis-muted（對比 ≥ 3:1）；不加文字，說明見卡片上方「第一審 → 第二審 → 第三審」 */
 .appeal { position: relative; display: flex; align-items: center; justify-content: center; }
 .appeal::before { content: ""; position: absolute; top: 8px; bottom: 0; left: 50%; width: 2px; margin-left: -1px; background: var(--axis-muted); }
 .appeal::after { content: ""; position: absolute; top: 0; left: calc(50% - 5px); border: 5px solid transparent; border-bottom: 8px solid var(--axis-muted); border-top: 0; }
-.appeal span { position: relative; font-size: 13px; color: var(--text-secondary); background: var(--surface-1); padding: 0 8px; line-height: 1.2; }
 .a-gen1 { grid-row: 3; grid-column: 2; } .a-adm { grid-row: 3; grid-column: 3; } .a-gen2 { grid-row: 5; grid-column: 2; }
 
 .ladder-divider { grid-row: 7; grid-column: 1 / -1; border-top: 1px solid var(--grid); margin: 24px 0 8px; }

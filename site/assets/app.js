@@ -503,7 +503,7 @@
         <dl>${lines.map(([k, v]) => `<div><dt>${k}</dt><dd>${fmt(v)}<span>件</span></dd></div>`).join('')}</dl>
       </div>`;
     const tier = (cls, name, role) => `<div class="lvl-label ${cls}"><b>${name}</b><span>${role}</span></div>`;
-    const appeal = (cls) => `<div class="appeal ${cls}" aria-hidden="true"><span>上訴</span></div>`;
+    const appeal = (cls) => `<div class="appeal ${cls}" aria-hidden="true"></div>`;
     document.getElementById('ladder').innerHTML = `
       <div class="col-head h-general">普通法院<span>民事、刑事、家事</span></div>
       <div class="col-head h-admin">行政法院<span>人民告政府</span></div>
