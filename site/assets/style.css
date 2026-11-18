@@ -230,7 +230,9 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 .c-sup { grid-row: 2; grid-column: 2; }
 .c-supadm { grid-row: 2; grid-column: 3; }
 .c-high { grid-row: 4; grid-column: 2; }
-.c-highadm { grid-row: 4 / 7; grid-column: 3; }
+.c-highadm { grid-row: 4; grid-column: 3; }
+/* 地方行政訴訟庭：設在高等行政法院內，沒有獨立件數 → 用虛線框表示「附屬」，不填底色 */
+.c-admlocal { grid-row: 6; grid-column: 3; background: transparent; border: 1px dashed var(--baseline); }
 .c-dist { grid-row: 6; grid-column: 2; }
 
 /* 上訴箭頭：線與三角形用 axis-muted（對比 ≥ 3:1），旁附文字，不只靠圖形表意 */
@@ -241,7 +243,10 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 .a-gen1 { grid-row: 3; grid-column: 2; } .a-adm { grid-row: 3; grid-column: 3; } .a-gen2 { grid-row: 5; grid-column: 2; }
 
 .ladder-divider { grid-row: 7; grid-column: 1 / -1; border-top: 1px solid var(--grid); margin: 24px 0 8px; }
-.rung-row { grid-row: 8; grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+/* 專業法院：三格合成一塊面板，用細分隔線分格，避免三張卡片和上方兩欄的邊界對不齊 */
+.rung-row { grid-row: 8; grid-column: 2 / 4; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: var(--surface-2); border-radius: 6px; }
+.rung-row .rung { background: transparent; border-radius: 0; }
+.rung-row .rung + .rung { box-shadow: -1px 0 0 var(--grid); }
 
 @media (max-width: 640px) {
   .ladder { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; row-gap: 8px; }
@@ -249,7 +254,8 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
   .col-head, .appeal { display: none; }
   .lvl-label { flex-direction: row; align-items: baseline; gap: 8px; padding-top: 16px; }
   .ladder-divider { margin: 8px 0 0; }
-  .rung-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .rung-row { grid-template-columns: minmax(0, 1fr); }
+  .rung-row .rung + .rung { box-shadow: 0 -1px 0 var(--grid); }
 }
 
 
