@@ -362,8 +362,11 @@
     const month = mSel.value;
     const snap = tbl(type.t).months[month];
     const col = type[metric];
-    const rows = Object.entries(snap).filter(([n]) => isDistrictCourt(n)).map(([n, v]) => ({ full: n, n: shortCourt(n), v: v[col] })).sort((a, b) => b.v - a.v);
-    if (!courtSel || !rows.some((r) => r.full === courtSel)) courtSel = rows[0].full;
+    const allRows = Object.entries(snap).filter(([n]) => isDistrictCourt(n)).map(([n, v]) => ({ full: n, n: shortCourt(n), v: v[col] }));
+    const derived = (tbl(type.t).derived || []).includes(month);
+    // 推算月份的比率（平均天數等）無法由累計還原，值為空
+    const rows = allRows.filter((r) => r.v != null).sort((a, b) => b.v - a.v);
+    if (!courtSel || !allRows.some((r) => r.full === courtSel)) courtSel = (rows[0] || allRows[0]).full;
     document.getElementById('fCourt').value = courtSel;
     const [mLabel, unit] = METRIC_LABEL[metric];
     const avg = metric === 'days' ? snap['臺灣各地方法院計']?.[col] : null;
@@ -371,16 +374,18 @@
     const periodLabel = tbl(type.t).periods?.[month] || per(month);
     barChart('c-court-rank', {
       title: `各地方法院${type.name}${mLabel}（${periodLabel}）`,
-      takeaway: metric === 'days'
+      takeaway: !rows.length
+        ? `${per(month)}的單月數字是用「${tbl(type.t).cumulative?.[month] || '累計資料'}」減去前幾個月推算的，平均天數這類比率無法這樣還原，請改選其他指標或月份。`
+        : (derived ? `${per(month)}為推算數字：由「${tbl(type.t).cumulative?.[month] || '累計資料'}」減去前幾個月單月。` : '') + (metric === 'days'
         ? `全國平均約 ${fmt(avg, 0)} 天；最久的是${top.n}（${fmt(top.v, 0)} 天）。天數受案件類型、複雜度影響，不能直接代表效率。`
-        : `${top.n}最多，共 ${fmt(top.v)} ${unit}；前三名合計占全國 ${fmt(pct(sum(rows.slice(0, 3).map((r) => r.v)), sum(rows.map((r) => r.v))), 0)}%。`,
+        : `${top.n}最多，共 ${fmt(top.v)} ${unit}；前三名合計占全國 ${fmt(pct(sum(rows.slice(0, 3).map((r) => r.v)), sum(rows.map((r) => r.v))), 0)}%。`),
       hint: '點選一所法院，右邊會顯示它的每月變化與重點數字。',
       source: sourceOf(type.t), cats: rows.map((r) => r.n), ser: [{ name: mLabel, data: rows.map((r) => r.v) }],
       horizontal: true, height: 'tall', digits: metric === 'days' ? 1 : 0, catHead: '法院',
       selected: shortCourt(courtSel),
       onSelect: (short) => { const r = rows.find((x) => x.n === short); if (r) { courtSel = r.full; renderCourtRank(); } },
     });
-    renderCourtDetail(type, metric, month, rows);
+    renderCourtDetail(type, metric, month, allRows);
   }
 
   function renderCourtDetail(type, metric, month, rows) {
@@ -401,9 +406,11 @@
     });
     lineChart('c-court-detail', {
       title: `${name}：每月${type.name}${mLabel}`,
-      takeaway: (metric === 'days' ? '和全國地方法院平均天數比較。' : `和全國 ${nCourts} 所地方法院的平均值比較。`) + (gaps.length ? `${gaps.join('、')}沒有單月的機關別資料。` : ''),
+      takeaway: (metric === 'days' ? '和全國地方法院平均天數比較。' : `和全國 ${nCourts} 所地方法院的平均值比較。`)
+        + ((T0.derived || []).length ? `標 * 的月份是由累計資料推算${metric === 'days' ? '，沒有平均天數' : ''}。` : '')
+        + (gaps.length ? `${gaps.join('、')}沒有單月的機關別資料。` : ''),
       hint: '點選月份，左邊的排名會切換到那個月。',
-      source: sourceOf(type.t), cats: ms.map(perShort), catHead: '月份', digits: metric === 'days' ? 1 : 0, unit: metric === 'days' ? '天' : '',
+      source: sourceOf(type.t), cats: ms.map((k) => perShort(k) + ((T0.derived || []).includes(k) ? '*' : '')), catHead: '月份', digits: metric === 'days' ? 1 : 0, unit: metric === 'days' ? '天' : '',
       ser: [{ name, data: own }, { name: metric === 'days' ? '全國平均' : '各院平均', data: nat, color: css('--neutral') }],
       endLabel: false, height: 'short',
       selectedIndex: ms.indexOf(month),
@@ -413,19 +420,20 @@
     const snap = T0.months[month];
     const me = snap[courtSel] || {};
     const rankOf = (c) => {
+      if (me[c] == null) return '推算月份無此數據';
       const vals = rows.map((r) => snap[r.full]?.[c]).filter((v) => v != null).sort((a, b) => b - a);
-      return vals.indexOf(me[c]) + 1;
+      return `第 ${vals.indexOf(me[c]) + 1} 多`;
     };
     const items = [
-      ['新收', fmt(me[type.new]), '件', `第 ${rankOf(type.new)} 多`],
-      ['終結', fmt(me[type.closed]), '件', `第 ${rankOf(type.closed)} 多`],
-      ['未結', fmt(me[type.pending]), '件', `第 ${rankOf(type.pending)} 多`],
-      ['平均審理天數', fmt(me[type.days], 1), '天', `全國 ${fmt(snap['臺灣各地方法院計']?.[type.days], 1)} 天`],
+      ['新收', fmt(me[type.new]), '件', rankOf(type.new)],
+      ['終結', fmt(me[type.closed]), '件', rankOf(type.closed)],
+      ['未結', fmt(me[type.pending]), '件', rankOf(type.pending)],
+      ['平均審理天數', fmt(me[type.days], 1), '天', me[type.days] == null ? '推算月份無此數據' : `全國 ${fmt(snap['臺灣各地方法院計']?.[type.days], 1)} 天`],
     ];
     const up = Object.keys(me).find((k) => /^上訴(案件|事件)維持率$/.test(k));
-    if (up && me[up] != null) items.push(['上訴維持率', fmt(me[up], 1), '%', '上級法院維持原判的比例']);
+    if (up && (me[up] != null || T0.derived?.includes(month))) items.push(['上訴維持率', fmt(me[up], 1), '%', me[up] == null ? '推算月份無此數據' : '上級法院維持原判的比例']);
     const settle = me['調解成立百分比/百分比一'];
-    if (settle != null) items.push(['調解成立比例', fmt(settle, 1), '%', '成立 ÷（成立＋不成立）']);
+    if (settle != null || (type.t === 33 && T0.derived?.includes(month))) items.push(['調解成立比例', fmt(settle, 1), '%', settle == null ? '推算月份無此數據' : '成立 ÷（成立＋不成立）']);
     document.getElementById('c-court-profile').innerHTML = `
       <h3>${name}重點數字</h3>
       <p class="takeaway">${type.name}事件，${T0.periods?.[month] || per(month)}；排名是在 ${nCourts} 所地方法院中的名次。</p>

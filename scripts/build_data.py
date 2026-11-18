@@ -286,17 +286,19 @@ def build():
                 label = parsed[0][1] or ""
                 y, mth = per.split("-")
                 expect = f"{y}年{int(mth)}月"
-                if label and not label.startswith(expect):
-                    if re.match(rf"^{y}年\d+[\-－~～至]{int(mth)}月", label):
-                        notes.append(f"{folder.name}/表{t:02d} 為累計資料（{label}），不列入單月比較")
-                    else:
-                        warnings.append(f"{folder.name}/表{t:02d} 標示期別為「{label}」，與資料夾月份 {expect} 不符，已略過")
-                    continue
                 snap: dict[str, dict] = {}
                 for _, _, _, rows in parsed:
                     for lab, sec, vals in rows:
                         key = f"{sec}/{lab}" if sec else lab
                         merge_dict(snap, key, vals)
+                if label and not label.startswith(expect):
+                    if re.match(rf"^{y}年1[\-－~～至]{int(mth)}月", label):
+                        # 半年報等「1–N月累計」：先存起來，最後用「累計 − 前幾個月單月」推算 N 月
+                        tbl.setdefault("_cum", {})[per] = snap
+                        tbl.setdefault("cumulative", {})[per] = label
+                    else:
+                        warnings.append(f"{folder.name}/表{t:02d} 標示期別為「{label}」，與資料夾月份 {expect} 不符，已略過")
+                    continue
                 tbl.setdefault("months", {})[per] = snap
                 tbl["asOf"] = per
                 tbl.setdefault("periods", {})[per] = parsed[0][1] or ""
@@ -310,6 +312,7 @@ def build():
             tbl["monthly"] = dict(sorted(tbl["monthly"].items(), key=lambda kv: tuple(map(int, kv[0].split("-")))))
             validate_series(tbl)
         else:
+            derive_from_cumulative(tbl)
             tbl["months"] = dict(sorted(tbl["months"].items()))
             validate_snapshot(tbl)
         (OUT / f"t{t:02d}.json").write_text(json.dumps(tbl, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
@@ -330,8 +333,8 @@ def build():
 
     print(f"完成：{len(tables)} 張表，最新期別 {meta['latestLabel']}，輸出至 {OUT.relative_to(ROOT)}")
     if notes:
-        print(f"\n說明 {len(notes)} 則（同類只列前 3 則）：")
-        for n in notes[:3]:
+        print(f"\n說明 {len(notes)} 則：")
+        for n in notes:
             print("  -", n)
     if warnings:
         print(f"\n⚠ 驗證警告 {len(warnings)} 則：")
@@ -357,6 +360,92 @@ def validate_series(tbl):
         s = sum((mv.get(col) or 0) for mv in months)
         if abs(s - total) > 0.5:
             warnings.append(f"表{tbl['id']:02d}「{col}」{y}年累計 {total} ≠ 各月加總 {s}")
+
+
+def column_kind(col: str) -> str:
+    """判斷欄位能不能用「累計 − 前幾月加總」推算單月。
+
+    flow   期間流量（新收、終結、核發、人數…）：可以相減
+    stock  期末存量（未結、未結案件經過時間）：累計表的期末值就是該月底的值
+    open   期初存量（舊受）與受理合計：用 舊受 = 未結 + 終結 − 新收 推回
+    rate   比率、平均日數、每法官辦結件數：無法由累計還原（少數可重算者另外處理）
+    """
+    if "未結" in col:
+        return "stock"
+    if col.endswith(("舊受", "受理件數/合計", "受理人數/合計")):
+        return "open"
+    if any(k in col for k in ("率", "百分比", "日數", "平均", "占")):
+        return "rate"
+    return "flow"
+
+
+# 可以用推算後的件數重算的比率：欄名 → (分子欄, 分母欄們)
+RECOMPUTE_RATES = {
+    "合計/緩刑率": ("合計/宣告緩刑人數", ["合計/宣告刑符合緩刑條件之被告人數"]),
+    "少年被告/緩刑率": ("少年被告/宣告緩刑人數", ["少年被告/宣告刑符合緩刑條件之被告人數"]),
+    "一般被告/緩刑率": ("一般被告/宣告緩刑人數", ["一般被告/宣告刑符合緩刑條件之被告人數"]),
+    "核發件數占核發與駁回件數": ("終結件數/核發", ["終結件數/核發", "終結件數/駁回"]),
+}
+
+
+def derive_from_cumulative(tbl):
+    """用「1–N月累計」減去 1～N−1 月單月，推算 N 月單月資料。"""
+    cum = tbl.pop("_cum", None)
+    if not cum:
+        return
+    months = tbl.setdefault("months", {})
+    for per, snap in cum.items():
+        y, m = map(int, per.split("-"))
+        prev = [f"{y}-{k:02d}" for k in range(1, m)]
+        missing = [p for p in prev if p not in months]
+        if missing:
+            warnings.append(f"表{tbl['id']:02d} {per} 為累計資料，但缺少 {', '.join(missing)} 單月，無法推算")
+            continue
+        out: dict[str, dict] = {}
+        negatives = 0
+        for row, vals in snap.items():
+            r = {}
+            for col, v in vals.items():
+                kind = column_kind(col)
+                if v is None:
+                    r[col] = None
+                elif kind == "flow":
+                    before = [months[p].get(row, {}).get(col) for p in prev]
+                    if any(b is None for b in before):
+                        r[col] = None
+                        continue
+                    d = v - sum(before)
+                    d = round(d, 4) if isinstance(d, float) else d
+                    if d < 0:
+                        negatives += 1
+                        d = None
+                    r[col] = d
+                elif kind == "stock":
+                    r[col] = v
+                else:
+                    r[col] = None  # open / rate 之後處理
+            # 舊受 = 未結 + 終結 − 新收；受理合計 = 舊受 + 新收
+            # 欄名可能帶前綴（如表44「少年法庭案件/受理件數/新收」），依前綴分組套用
+            for new in [c for c in r if c.endswith(("受理件數/新收", "受理人數/新收"))]:
+                base = new[: -len("/新收")]               # …/受理件數
+                pre = base[: -len("受理件數")] if base.endswith("受理件數") else base[: -len("受理人數")]
+                unit = "件數" if base.endswith("件數") else "人數"
+                old, tot = f"{base}/舊受", f"{base}/合計"
+                closed = next((c for c in (f"{pre}終結{unit}", f"{pre}終結{unit}/計", f"{pre}終結{unit}/合計") if c in r), None)
+                pend = f"{pre}未結{unit}" if f"{pre}未結{unit}" in r else None
+                if old in r and closed and pend and None not in (r[new], r[closed], r[pend]):
+                    r[old] = r[pend] + r[closed] - r[new]
+                    if tot in r:
+                        r[tot] = r[old] + r[new]
+            for col, (num, dens) in RECOMPUTE_RATES.items():
+                if col in r:
+                    nv, dv = r.get(num), [r.get(d) for d in dens]
+                    r[col] = round(nv / sum(dv) * 100, 2) if nv is not None and None not in dv and sum(dv) else None
+            out[row] = r
+        months[per] = out
+        tbl.setdefault("periods", {})[per] = f"{y}年{m}月 推算值"
+        tbl.setdefault("derived", []).append(per)
+        notes.append(f"表{tbl['id']:02d} {per} 由「{tbl['cumulative'][per]}」減去前 {m - 1} 個月推算" + (f"；{negatives} 個值為負數已留空" if negatives else ""))
 
 
 def validate_snapshot(tbl):
