@@ -424,6 +424,30 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 /* 頁尾：深藍底白字 */
 [data-theme="judicial"] .site-footer { background: var(--brand); border-top: 0; color: var(--on-brand); font-size: 14px; }
 
+/* ==========================================================
+   手機版頁首：壓縮成一行，捲動時只留分頁標籤列
+   （放在司法院主題之後，並用 :root 提高權重，三種模式都適用）
+   ========================================================== */
+@media (max-width: 640px) {
+  /* 頁首整塊仍 sticky，但往上推「標題列」的高度 → 捲動後只剩分頁列黏在頂端（--hdr-row-h 由 app.js 量測） */
+  :root .site-header { top: calc(env(safe-area-inset-top, 0px) - var(--hdr-row-h, 0px)); }
+  :root .header-row { gap: 8px; padding-top: 8px; padding-bottom: 8px; }
+  :root .brand { gap: 8px; flex: 1 1 auto; }
+  :root .brand-mark { width: 28px; height: 28px; }
+  :root .brand-mark svg { width: 18px; height: 18px; }
+  :root[data-theme="judicial"] .brand-mark svg { width: 26px; height: 26px; }
+  :root .brand h1 { font-size: 16px; letter-spacing: .02em; white-space: nowrap; }
+  :root .brand .sub { font-size: 12px; white-space: nowrap; }
+  :root .brand .sub .src { display: none; }
+  :root .header-actions { gap: 6px; }
+  :root .header-actions .ghost-btn { min-height: 36px; font-size: 13px; }
+  :root #langBtn { min-width: 40px; padding: 0 8px; }
+  :root .mode-pick { padding: 0 2px 0 8px; }
+  :root .mode-pick svg, :root .mode-pick [data-i18n="theme"] { display: none; }
+  :root .mode-pick select { min-height: 34px; }
+  :root[data-theme="judicial"] .tabs button { min-height: 44px; padding: 0 14px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; scroll-behavior: auto !important; }
 }

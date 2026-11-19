@@ -1023,6 +1023,11 @@
     charts.splice(0).forEach((c) => c.dispose());
     show(current, false);
   }
+  // 量測標題列高度，手機版用它把頁首往上推，捲動時只留分頁列
+  const headerRow = document.querySelector('.header-row');
+  const setHdr = () => document.documentElement.style.setProperty('--hdr-row-h', `${headerRow.offsetHeight}px`);
+  if (window.ResizeObserver) new ResizeObserver(setHdr).observe(headerRow); else setHdr();
+
   // 模式下拉選單：司法院（預設）／淺色／深色
   const themeSelect = document.getElementById('themeSelect');
   themeSelect.value = document.documentElement.getAttribute('data-theme') || 'judicial';

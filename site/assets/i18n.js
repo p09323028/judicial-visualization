@@ -17,7 +17,7 @@
   const STATIC = {
     'skip': 'Skip to main content',
     'site-title': 'Taiwan Judicial Statistics',
-    'sub': 'Data through <strong id="asof">—</strong><span class="dot" aria-hidden="true">·</span>Source: Judicial Yuan Monthly Statistics',
+    'sub': 'Data through <strong id="asof">—</strong><span class="src"><span class="dot" aria-hidden="true">·</span>Source: Judicial Yuan Monthly Statistics</span>',
     'theme': 'Mode', 'mode-judicial': 'Judicial', 'mode-light': 'Light', 'mode-dark': 'Dark',
     'tab-home': 'Overview', 'tab-courts': 'Cases &amp; Courts', 'tab-levels': 'Court Levels', 'tab-crime': 'Criminal Cases',
     'tab-life': 'Protection Orders &amp; Debt', 'tab-youth': 'Juveniles &amp; Surveillance', 'tab-glossary': 'Glossary',
