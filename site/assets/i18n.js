@@ -18,7 +18,7 @@
     'skip': 'Skip to main content',
     'site-title': 'Taiwan Judicial Statistics',
     'sub': 'Data through <strong id="asof">—</strong><span class="dot" aria-hidden="true">·</span>Source: Judicial Yuan Monthly Statistics',
-    'theme': 'Theme',
+    'theme': 'Mode', 'mode-judicial': 'Judicial', 'mode-light': 'Light', 'mode-dark': 'Dark',
     'tab-home': 'Overview', 'tab-courts': 'Cases &amp; Courts', 'tab-levels': 'Court Levels', 'tab-crime': 'Criminal Cases',
     'tab-life': 'Protection Orders &amp; Debt', 'tab-youth': 'Juveniles &amp; Surveillance', 'tab-glossary': 'Glossary',
     'home-lede': 'Taiwan’s courts handle more than 4 million cases a year. This site turns the Judicial Yuan’s monthly statistics into charts, so you can quickly see what the courts are busy with and how caseloads are changing.',
@@ -136,7 +136,7 @@
       const v = STATIC[el.dataset.i18n];
       if (v != null) el.innerHTML = v;
     });
-    const aria = { '#themeBtn': 'Toggle light / dark mode', '.tabs': 'Sections', '.linkbar': 'Overview chart filters' };
+    const aria = { '.tabs': 'Sections', '.linkbar': 'Overview chart filters' };
     Object.entries(aria).forEach(([sel, v]) => document.querySelector(sel)?.setAttribute('aria-label', v));
   }
 

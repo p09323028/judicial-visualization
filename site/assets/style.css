@@ -41,7 +41,7 @@
   --font: system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", "PingFang TC", "Noto Sans TC", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]):not([data-theme="judicial"]) {
     color-scheme: dark;
     --page: #0b1220;
     --surface-1: #111a2b;
@@ -167,7 +167,18 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 .header-actions { display: flex; gap: 8px; flex: none; }
 #langBtn { min-width: 52px; justify-content: center; }
-@media (max-width: 480px) { #themeBtn [data-i18n="theme"] { display: none; } }
+/* 模式下拉選單：整顆膠囊可點，select 去掉原生外框，只留文字與箭頭 */
+.mode-pick { padding-right: 8px; gap: 6px; }
+.mode-pick select {
+  font: inherit; font-weight: 600; color: inherit; background: transparent; border: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; min-height: 38px; padding: 0 22px 0 4px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 2px center;
+}
+.mode-pick select option { color: var(--text-primary); background: var(--surface-1); }
+.mode-pick:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.mode-pick select:focus-visible { outline: none; }
+@media (max-width: 480px) { .mode-pick [data-i18n="theme"] { display: none; } }
 
 .tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: -1px; }
 .tabs::-webkit-scrollbar { display: none; }
@@ -348,6 +359,70 @@ table.data-table { border-collapse: collapse; width: 100%; font-size: 13px; font
 /* ---------- 頁尾 ---------- */
 .site-footer { border-top: 1px solid var(--border); background: var(--surface-1); color: var(--text-muted); font-size: 13px; }
 .site-footer p { margin: 0; padding-top: 20px; padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)); }
+
+/* ==========================================================
+   司法院主題（預設）：版面不變，配色與元件樣式對齊司法院全球資訊網
+   - 白底、中性灰；分頁標籤為司法院深藍導覽列；金色點綴；近直角
+   - 只在 <html data-theme="judicial"> 時生效，淺色／深色主題完全不受影響
+   ========================================================== */
+:root[data-theme="judicial"] {
+  color-scheme: light;
+  --page: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f2f2f2;
+  --text-primary: #1f1f1f;
+  --text-secondary: #474747;
+  --text-muted: #5c5c5c;
+  --axis-muted: #6b6b6b;
+  --grid: #e5e5e5;
+  --baseline: #c4c4c4;
+  --border: #d6d6d6;
+  --accent: #1f4b82;
+  --brand: #2b4a72;        /* 司法院導覽列深藍 */
+  --brand-hover: #3d5f8c;
+  --brand-active: #5776a0; /* 導覽列上被選取的項目 */
+  --gold: #b8922a;
+  --on-brand: #ffffff;
+  --radius: 2px;
+  --radius-sm: 2px;
+  --font: "Microsoft JhengHei", "微軟正黑體", "PingFang TC", "Noto Sans TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+/* 頁首：金色天平、導覽列取代底線 */
+[data-theme="judicial"] .site-header { border-bottom: 0; }
+[data-theme="judicial"] .header-row { padding-top: 14px; padding-bottom: 14px; }
+[data-theme="judicial"] .brand-mark { background: none; color: var(--gold); }
+[data-theme="judicial"] .brand-mark svg { width: 36px; height: 36px; }
+[data-theme="judicial"] .brand h1 { font-size: 20px; letter-spacing: .06em; }
+/* 工具鈕：灰色膠囊（同官網「小 中 大」） */
+[data-theme="judicial"] .ghost-btn { background: var(--surface-2); border: 0; border-radius: 20px; }
+[data-theme="judicial"] .ghost-btn:hover { background: var(--brand); color: var(--on-brand); }
+/* 分頁標籤：深藍導覽列，底色延伸到整個視窗寬（nav 仍在 .wrap 內，文字與內容對齊） */
+[data-theme="judicial"] .tabs {
+  gap: 0; margin-bottom: 0;
+  background: var(--brand); box-shadow: 0 0 0 100vmax var(--brand); clip-path: inset(0 -100vmax);
+}
+[data-theme="judicial"] .tabs button {
+  color: var(--on-brand); min-height: 48px; padding: 0 20px; letter-spacing: .04em; border-bottom: 0;
+}
+[data-theme="judicial"] .tabs button:hover { background: var(--brand-hover); color: var(--on-brand); }
+[data-theme="judicial"] .tabs button[aria-selected="true"] { background: var(--brand-active); color: var(--on-brand); box-shadow: inset 0 -3px 0 var(--gold); }
+[data-theme="judicial"] .tabs button:focus-visible { outline: 3px solid var(--on-brand); outline-offset: -5px; }
+/* 區塊標題：左側金色短條 */
+[data-theme="judicial"] .section-title { gap: 12px; }
+[data-theme="judicial"] .section-title::before { content: ""; flex: none; width: 4px; height: 1.2em; background: var(--gold); }
+/* 重點數字：深藍頂線 */
+[data-theme="judicial"] .tile { border-top: 3px solid var(--brand); }
+/* 篩選列：灰底無框 */
+[data-theme="judicial"] .filters { background: var(--surface-2); border: 0; }
+/* 數據表：深藍表頭、隔列灰底 */
+[data-theme="judicial"] .data-table thead th { background: var(--brand); color: var(--on-brand); }
+[data-theme="judicial"] .data-table tbody tr:nth-child(even) td { background: var(--surface-2); }
+[data-theme="judicial"] .data-table tbody tr:hover td { background: #e6ebf2; }
+/* 層級圖：近直角 */
+[data-theme="judicial"] .rung, [data-theme="judicial"] .rung-row { border-radius: var(--radius); }
+[data-theme="judicial"] .rung-row .rung { border-radius: 0; }
+/* 頁尾：深藍底白字 */
+[data-theme="judicial"] .site-footer { background: var(--brand); border-top: 0; color: var(--on-brand); font-size: 14px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; scroll-behavior: auto !important; }

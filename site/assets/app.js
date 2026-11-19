@@ -1023,11 +1023,12 @@
     charts.splice(0).forEach((c) => c.dispose());
     show(current, false);
   }
-  document.getElementById('themeBtn').addEventListener('click', () => {
-    const root = document.documentElement;
-    const isDark = root.getAttribute('data-theme') === 'dark' || (!root.getAttribute('data-theme') && matchMedia('(prefers-color-scheme: dark)').matches);
-    const next = isDark ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
+  // 模式下拉選單：司法院（預設）／淺色／深色
+  const themeSelect = document.getElementById('themeSelect');
+  themeSelect.value = document.documentElement.getAttribute('data-theme') || 'judicial';
+  themeSelect.addEventListener('change', () => {
+    const next = themeSelect.value;
+    document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('theme', next); } catch (e) {}
     rerenderAll();
   });

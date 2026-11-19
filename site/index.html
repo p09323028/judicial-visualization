@@ -8,7 +8,13 @@
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/style.css">
 <script>
-  try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  (function () {
+    // 主題：judicial（司法院，預設）／light（淺色）／dark（深色）
+    var t = 'judicial';
+    try { t = localStorage.getItem('theme') || t; } catch (e) {}
+    if (['judicial', 'light', 'dark'].indexOf(t) < 0) t = 'judicial';
+    document.documentElement.setAttribute('data-theme', t);
+  })();
 </script>
 </head>
 <body>
@@ -26,9 +32,14 @@
     </div>
     <div class="header-actions">
       <button id="langBtn" class="ghost-btn" type="button">EN</button>
-      <button id="themeBtn" class="ghost-btn" type="button" aria-label="切換亮色／暗色模式">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg><span data-i18n="theme">主題</span>
-      </button>
+      <label class="mode-pick ghost-btn" for="themeSelect">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg><span data-i18n="theme">模式</span>
+        <select id="themeSelect">
+          <option value="judicial" data-i18n="mode-judicial">司法院</option>
+          <option value="light" data-i18n="mode-light">淺色</option>
+          <option value="dark" data-i18n="mode-dark">深色</option>
+        </select>
+      </label>
     </div>
   </div>
   <nav class="wrap tabs" role="tablist" aria-label="主題">
